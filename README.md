@@ -229,7 +229,7 @@ Contributions are welcome. Please:
 
 ### Requirements
 
-- Go 1.26+
+- Go 1.24+
 - `protoc` with `protoc-gen-go` and `protoc-gen-go-grpc` for proto generation
 - `golangci-lint` for linting
 
