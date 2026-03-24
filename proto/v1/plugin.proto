@@ -1,0 +1,401 @@
+syntax = "proto3";
+
+package bino.plugin.v1;
+
+option go_package = "github.com/bino-bi/bino-plugin-sdk/proto/v1;pluginv1";
+
+// BinoPlugin is the main service that every plugin must implement.
+service BinoPlugin {
+
+  // ── Lifecycle ──────────────────────────────────────────────────
+
+  // Init is called once after connection. The plugin receives its
+  // configuration and returns a manifest describing its capabilities.
+  rpc Init(InitRequest) returns (PluginManifest);
+
+  // Shutdown is called before the host terminates the plugin process.
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+
+  // ── Kind & Schema ─────────────────────────────────────────────
+
+  // GetSchemas returns JSON Schema definitions for all kinds this
+  // plugin provides. Called once at startup and cached.
+  rpc GetSchemas(GetSchemasRequest) returns (GetSchemasResponse);
+
+  // ── DataSource ────────────────────────────────────────────────
+
+  // CollectDataSource processes a custom DataSource document and
+  // returns tabular data (JSON rows) to be registered as a DuckDB view.
+  rpc CollectDataSource(CollectDataSourceRequest) returns (CollectDataSourceResponse);
+
+  // ── Linting ───────────────────────────────────────────────────
+
+  // Lint receives all loaded documents and returns findings.
+  rpc Lint(LintRequest) returns (LintResponse);
+
+  // ── Assets ────────────────────────────────────────────────────
+
+  // GetAssets returns JS/CSS assets to inject into rendered HTML.
+  rpc GetAssets(GetAssetsRequest) returns (GetAssetsResponse);
+
+  // ── CLI Commands ──────────────────────────────────────────────
+
+  // ListCommands returns subcommand descriptors for bino help.
+  rpc ListCommands(ListCommandsRequest) returns (ListCommandsResponse);
+
+  // ExecCommand executes a plugin-provided CLI subcommand.
+  rpc ExecCommand(ExecCommandRequest) returns (stream ExecCommandOutput);
+
+  // ── Pipeline Hooks ────────────────────────────────────────────
+
+  // OnHook is called at each pipeline checkpoint. The plugin can
+  // inspect and optionally modify the payload.
+  rpc OnHook(HookRequest) returns (HookResponse);
+
+  // ── Component Rendering ─────────────────────────────────────
+
+  // RenderComponent generates HTML for a plugin-provided component kind.
+  // Called once per component instance during layout rendering.
+  rpc RenderComponent(RenderComponentRequest) returns (RenderComponentResponse);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Lifecycle
+// ═══════════════════════════════════════════════════════════════════
+
+message InitRequest {
+  map<string, string> config = 1;    // From bino.toml [plugins.<name>.config]
+  string project_root = 2;
+  string bino_version = 3;
+  uint32 host_service_id = 4;        // Broker ID for BinoHost service (0 = not available)
+}
+
+message PluginManifest {
+  string name = 1;                   // e.g., "salesforce"
+  string version = 2;                // semver
+  string description = 3;
+
+  // Capabilities — what this plugin provides
+  repeated KindRegistration kinds = 10;
+  repeated string duckdb_extensions = 11;  // e.g., ["httpfs", "spatial"]
+  bool provides_linter = 12;
+  bool provides_assets = 13;
+  repeated CommandDescriptor commands = 14;
+  repeated string hooks = 15;        // checkpoints this plugin wants to receive
+}
+
+message ShutdownRequest {}
+message ShutdownResponse {}
+
+// ═══════════════════════════════════════════════════════════════════
+// Kind Registration
+// ═══════════════════════════════════════════════════════════════════
+
+message KindRegistration {
+  string kind_name = 1;       // e.g., "SalesforceDataSource"
+  KindCategory category = 2;  // How bino treats this kind internally
+
+  // datasource_type is set when category = KIND_DATASOURCE.
+  // This is the value of spec.type for routing to CollectDataSource.
+  string datasource_type = 3; // e.g., "salesforce_soql"
+}
+
+enum KindCategory {
+  KIND_DATASOURCE = 0;    // Treated as a DataSource variant
+  KIND_COMPONENT = 1;     // Treated as a visual component (future)
+  KIND_CONFIG = 2;        // Treated as configuration (future)
+  KIND_ARTIFACT = 3;      // Treated as an artifact type (future)
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Kind & Schema
+// ═══════════════════════════════════════════════════════════════════
+
+message GetSchemasRequest {}
+
+message GetSchemasResponse {
+  // Map of kind_name -> JSON Schema (as JSON bytes)
+  map<string, bytes> schemas = 1;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DataSource
+// ═══════════════════════════════════════════════════════════════════
+
+message CollectDataSourceRequest {
+  string name = 1;                   // metadata.name
+  bytes raw_spec = 2;                // JSON of the spec section
+  map<string, string> env = 3;       // resolved environment variables
+  string project_root = 4;
+}
+
+message CollectDataSourceResponse {
+  // JSON array of objects — each object becomes a row in the DuckDB view
+  bytes json_rows = 1;
+
+  // Column type hints (optional). If omitted, DuckDB infers types.
+  map<string, string> column_types = 2;
+
+  // Whether this source is ephemeral (always re-fetched)
+  bool ephemeral = 3;
+
+  // Diagnostics (non-fatal warnings)
+  repeated Diagnostic diagnostics = 4;
+
+  // DuckDB SQL expression to register as a view instead of json_rows.
+  // When set, json_rows is ignored. Example: "read_parquet('s3://...')"
+  string duckdb_expression = 5;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Linting
+// ═══════════════════════════════════════════════════════════════════
+
+message LintRequest {
+  repeated LintDocument documents = 1;
+
+  // Optional: pre-computed dataset results for data-aware linting.
+  repeated DatasetPayload datasets = 2;
+
+  // Whether datasets field is populated.
+  bool datasets_available = 3;
+
+  // Optional: rendered HTML for output validation.
+  bytes rendered_html = 4;
+}
+
+message LintDocument {
+  string file = 1;
+  int32 position = 2;
+  string kind = 3;
+  string name = 4;
+  bytes raw = 5;
+}
+
+message LintResponse {
+  repeated LintFinding findings = 1;
+}
+
+message LintFinding {
+  string rule_id = 1;      // Prefixed with plugin name: "salesforce/field-access"
+  string message = 2;
+  string file = 3;
+  int32 doc_idx = 4;
+  string path = 5;
+  int32 line = 6;
+  int32 column = 7;
+  Severity severity = 8;
+}
+
+enum Severity {
+  WARNING = 0;
+  ERROR = 1;
+  INFO = 2;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Assets
+// ═══════════════════════════════════════════════════════════════════
+
+message GetAssetsRequest {
+  string render_mode = 1;   // "build" or "preview"
+}
+
+message GetAssetsResponse {
+  // JS modules to inject into <head>
+  repeated AssetFile scripts = 1;
+
+  // CSS files to inject into <head>
+  repeated AssetFile styles = 2;
+}
+
+message AssetFile {
+  // Unique URL path for serving (e.g., "/plugins/salesforce/chart.js")
+  string url_path = 1;
+
+  // The file content (inline). For large assets, consider file_path instead.
+  bytes content = 2;
+
+  // Alternative: absolute path to a file on disk the host should serve.
+  string file_path = 3;
+
+  // MIME type (auto-detected from extension if empty)
+  string media_type = 4;
+
+  // Whether this is an ES module script (type="module")
+  bool is_module = 5;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CLI Commands
+// ═══════════════════════════════════════════════════════════════════
+
+message CommandDescriptor {
+  string name = 1;          // Subcommand name: "bino salesforce:auth"
+  string short = 2;         // One-line description for help
+  string long = 3;          // Detailed help text
+  string usage = 4;         // Usage pattern
+  repeated FlagDescriptor flags = 5;
+}
+
+message FlagDescriptor {
+  string name = 1;
+  string shorthand = 2;
+  string description = 3;
+  string default_value = 4;
+  string type = 5;          // "string", "bool", "int"
+  bool required = 6;
+}
+
+message ExecCommandRequest {
+  string command = 1;
+  repeated string args = 2;
+  map<string, string> flags = 3;
+  string workdir = 4;
+}
+
+message ExecCommandOutput {
+  bytes stdout = 1;
+  bytes stderr = 2;
+  int32 exit_code = 3;      // Only set in the final message
+  bool is_final = 4;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Pipeline Hooks
+// ═══════════════════════════════════════════════════════════════════
+
+message HookRequest {
+  string checkpoint = 1;        // e.g., "post-load", "pre-render-html"
+  HookPayload payload = 2;
+}
+
+message HookPayload {
+  // Depending on checkpoint, one of these is populated:
+  repeated DocumentPayload documents = 1;  // post-load, pre-render
+  bytes html = 2;                          // post-render-html
+  string pdf_path = 3;                     // post-render-pdf
+  repeated DatasetPayload datasets = 4;    // post-dataset-execute
+  map<string, string> metadata = 10;       // Always available
+}
+
+message DocumentPayload {
+  string file = 1;
+  int32 position = 2;
+  string kind = 3;
+  string name = 4;
+  bytes raw = 5;             // JSON
+}
+
+message DatasetPayload {
+  string name = 1;
+  bytes json_rows = 2;       // JSON array
+  repeated string columns = 3;
+}
+
+message HookResponse {
+  // If modified = true, the host uses the returned payload
+  // instead of the original. If false, the original is kept.
+  bool modified = 1;
+  HookPayload payload = 2;
+
+  // Diagnostics from hook processing
+  repeated Diagnostic diagnostics = 3;
+
+  // Structured lint findings from hook processing.
+  repeated LintFinding findings = 4;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Shared
+// ═══════════════════════════════════════════════════════════════════
+
+message Diagnostic {
+  string source = 1;  // plugin name
+  string stage = 2;
+  string message = 3;
+  Severity severity = 4;
+}
+
+message ListCommandsRequest {}
+message ListCommandsResponse {
+  repeated CommandDescriptor commands = 1;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Component Rendering
+// ═══════════════════════════════════════════════════════════════════
+
+message RenderComponentRequest {
+  string kind = 1;          // e.g., "ExampleChart"
+  string name = 2;          // metadata.name of the document
+  bytes spec = 3;           // JSON of the effective spec (after ref resolution + overrides)
+  string render_mode = 4;   // "build" or "preview"
+}
+
+message RenderComponentResponse {
+  // HTML fragment to insert into the layout slot.
+  // Must be a single root element (e.g., <bn-example-chart ...>...</bn-example-chart>)
+  string html = 1;
+
+  // Diagnostics from rendering.
+  repeated Diagnostic diagnostics = 2;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BinoHost — host service that plugins can call back to
+// ═══════════════════════════════════════════════════════════════════
+
+// BinoHost is a service exposed by the CLI host via go-plugin's GRPCBroker.
+// Plugins receive the broker service ID in InitRequest.host_service_id and
+// dial back to query host state (DuckDB, documents, datasets).
+service BinoHost {
+  // QueryDuckDB executes a SQL query against the host's DuckDB engine.
+  rpc QueryDuckDB(QueryRequest) returns (QueryResponse);
+
+  // GetDocument returns a single manifest document by kind and name.
+  rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
+
+  // GetDatasetResult returns pre-executed dataset results by name.
+  rpc GetDatasetResult(GetDatasetResultRequest) returns (GetDatasetResultResponse);
+
+  // ListDocuments returns all loaded documents, optionally filtered by kind.
+  rpc ListDocuments(ListDocumentsRequest) returns (ListDocumentsResponse);
+}
+
+message QueryRequest {
+  string sql = 1;
+}
+
+message QueryResponse {
+  bytes json_rows = 1;           // JSON array of row objects
+  repeated string columns = 2;
+  repeated Diagnostic diagnostics = 3;
+}
+
+message GetDocumentRequest {
+  string kind = 1;               // optional: filter by kind
+  string name = 2;               // required: document name
+}
+
+message GetDocumentResponse {
+  DocumentPayload document = 1;
+  bool found = 2;
+}
+
+message GetDatasetResultRequest {
+  string name = 1;
+}
+
+message GetDatasetResultResponse {
+  DatasetPayload dataset = 1;
+  bool found = 2;
+}
+
+message ListDocumentsRequest {
+  string kind_filter = 1;        // optional: filter by kind (empty = all)
+}
+
+message ListDocumentsResponse {
+  repeated DocumentPayload documents = 1;
+}
