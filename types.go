@@ -14,7 +14,7 @@ const (
 
 // Kind describes a custom kind this plugin provides.
 type Kind struct {
-	Name           string       // e.g., "SalesforceDataSource"
+	Name           string // e.g., "SalesforceDataSource"
 	Category       KindCategory
 	DataSourceType string // Only for KindDataSource — routing key
 	Schema         []byte // JSON Schema bytes for this kind
@@ -140,8 +140,8 @@ type HookFunc func(ctx context.Context, payload *HookPayload) (*HookResult, erro
 
 // Diagnostic is a non-fatal message from the plugin.
 type Diagnostic struct {
-	Source   string   // Plugin name (auto-set if empty)
-	Stage    string   // Pipeline stage (e.g., "collect", "lint")
+	Source   string // Plugin name (auto-set if empty)
+	Stage    string // Pipeline stage (e.g., "collect", "lint")
 	Message  string
 	Severity Severity
 }
