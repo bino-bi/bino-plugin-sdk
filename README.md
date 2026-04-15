@@ -209,29 +209,7 @@ bino-plugin-sdk/
 
 ## Contributing
 
-Contributions are welcome. Please:
-
-1. **Open an issue first** to discuss the change you'd like to make.
-2. **Fork the repo** and create a feature branch.
-3. **Write tests** — table-driven tests with `t.Run` subtests preferred.
-4. **Run checks** before submitting:
-   ```bash
-   go vet ./...
-   golangci-lint run ./...
-   go test -race ./...
-   ```
-5. **Keep the proto contract backward-compatible** — no removed fields, no
-   changed field numbers.
-6. **Regenerate proto** if you modify `plugin.proto`:
-   ```bash
-   make proto
-   ```
-
-### Requirements
-
-- Go 1.24+
-- `protoc` with `protoc-gen-go` and `protoc-gen-go-grpc` for proto generation
-- `golangci-lint` for linting
+Contributions are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines, development setup, and the proto backward-compatibility policy. Please also review our [Code of Conduct](./CODE_OF_CONDUCT.md) and [Security Policy](./SECURITY.md).
 
 ## License
 

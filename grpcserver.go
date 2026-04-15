@@ -68,7 +68,7 @@ func (s *grpcServer) Init(_ context.Context, req *pluginv1.InitRequest) (*plugin
 	for _, k := range s.opts.Kinds {
 		manifest.Kinds = append(manifest.Kinds, &pluginv1.KindRegistration{
 			KindName:       k.Name,
-			Category:       pluginv1.KindCategory(k.Category),
+			Category:       pluginv1.KindCategory(k.Category), //nolint:gosec // G115: KindCategory is a small enum (0..3)
 			DatasourceType: k.DataSourceType,
 		})
 	}

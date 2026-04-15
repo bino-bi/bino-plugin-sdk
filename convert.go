@@ -22,13 +22,14 @@ func findingToProto(f Finding, defaultRuleID string) *pluginv1.LintFinding {
 		ruleID = defaultRuleID
 	}
 	return &pluginv1.LintFinding{
-		RuleId:   ruleID,
-		Message:  f.Message,
-		File:     f.File,
+		RuleId:  ruleID,
+		Message: f.Message,
+		File:    f.File,
+		//nolint:gosec // G115: doc indices, line/column numbers fit in int32 for any real source file
 		DocIdx:   int32(f.DocIdx),
 		Path:     f.Path,
-		Line:     int32(f.Line),
-		Column:   int32(f.Column),
+		Line:     int32(f.Line),   //nolint:gosec // G115: bounded by source file size
+		Column:   int32(f.Column), //nolint:gosec // G115: bounded by source line length
 		Severity: severityToProto(f.Severity),
 	}
 }
@@ -103,7 +104,7 @@ func hookPayloadToProto(hp *HookPayload) *pluginv1.HookPayload {
 	for _, d := range hp.Documents {
 		pb.Documents = append(pb.Documents, &pluginv1.DocumentPayload{
 			File:     d.File,
-			Position: int32(d.Position),
+			Position: int32(d.Position), //nolint:gosec // G115: document position is bounded by file count
 			Kind:     d.Kind,
 			Name:     d.Name,
 			Raw:      d.Raw,

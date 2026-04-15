@@ -142,7 +142,7 @@ func TestGRPCServer_Lint(t *testing.T) {
 			{
 				ID: "test/always-warn",
 				Check: func(ctx context.Context, docs []Document) []Finding {
-					var findings []Finding
+					findings := make([]Finding, 0, len(docs))
 					for _, d := range docs {
 						findings = append(findings, Finding{
 							Message:  "warning on " + d.Name,
