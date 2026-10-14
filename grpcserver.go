@@ -3,6 +3,7 @@ package pluginsdk
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"strings"
 	"sync"
@@ -32,19 +33,12 @@ func (p *binoPlugin) GRPCClient(_ context.Context, _ *goplugin.GRPCBroker, _ *gr
 // grpcServer implements the BinoPlugin gRPC service.
 type grpcServer struct {
 	pluginv1.UnimplementedBinoPluginServer
-	opts        *PluginOpts
-	config      map[string]string
-	projectRoot string
-	binoVersion string
-	broker      *goplugin.GRPCBroker
-	hostClient  HostClient // set during Init if host service is available
+	opts       *PluginOpts
+	broker     *goplugin.GRPCBroker
+	hostClient HostClient // set during Init if host service is available
 }
 
-func (s *grpcServer) Init(_ context.Context, req *pluginv1.InitRequest) (*pluginv1.PluginManifest, error) {
-	s.config = req.GetConfig()
-	s.projectRoot = req.GetProjectRoot()
-	s.binoVersion = req.GetBinoVersion()
-
+func (s *grpcServer) Init(ctx context.Context, req *pluginv1.InitRequest) (*pluginv1.PluginManifest, error) {
 	// Dial the host service if a broker ID was provided.
 	if hostID := req.GetHostServiceId(); hostID != 0 && s.broker != nil {
 		conn, err := s.broker.Dial(hostID)
@@ -53,6 +47,20 @@ func (s *grpcServer) Init(_ context.Context, req *pluginv1.InitRequest) (*plugin
 			_, _ = fmt.Fprintf(os.Stderr, "warning: could not connect to host service: %v\n", err)
 		} else {
 			s.hostClient = &grpcHostClient{client: pluginv1.NewBinoHostClient(conn)}
+		}
+	}
+
+	if s.opts.OnInit != nil {
+		// Copy so the plugin can keep or modify the map without touching the request.
+		cfg := make(map[string]string, len(req.GetConfig()))
+		maps.Copy(cfg, req.GetConfig())
+		if err := s.opts.OnInit(ctx, InitInfo{
+			Config:      cfg,
+			ProjectRoot: req.GetProjectRoot(),
+			BinoVersion: req.GetBinoVersion(),
+			Host:        s.hostClient,
+		}); err != nil {
+			return nil, err
 		}
 	}
 

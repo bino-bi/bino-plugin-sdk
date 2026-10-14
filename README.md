@@ -118,6 +118,7 @@ plugin. Call this as the last line of `main()`.
 | `Commands` | `[]Command` | CLI subcommands |
 | `Hooks` | `map[string]HookFunc` | Pipeline hook callbacks |
 | `RenderComponent` | `func(ctx, *RenderRequest) (*RenderResponse, error)` | Component HTML renderer |
+| `OnInit` | `func(ctx, InitInfo) error` | Called once at startup with the plugin config |
 
 ### Host access
 
@@ -136,7 +137,47 @@ CollectDataSource: func(ctx context.Context, req *sdk.CollectRequest) (*sdk.Coll
 ```
 
 Available on: `CollectRequest.Host`, `RenderRequest.Host`, `HookPayload.Host`,
-`LintContext.Host`, and via `Command.RunWithHost`.
+`LintContext.Host`, `InitInfo.Host`, and via `Command.RunWithHost`.
+
+### Configuration
+
+Users configure a plugin in `bino.toml` with a `config` string map:
+
+```toml
+[plugins.myplugin]
+config = { theme = "dark", cdn_url = "https://cdn.example.com" }
+```
+
+The SDK passes it to `OnInit`, together with the project root, the bino
+version and the host client. `OnInit` runs once, before any other callback.
+If it returns an error, the plugin fails to load. Keep the values you need
+for later calls:
+
+```go
+var theme = "light"
+
+sdk.Serve(&sdk.PluginOpts{
+    Name: "myplugin",
+    OnInit: func(ctx context.Context, info sdk.InitInfo) error {
+        if t, ok := info.Config["theme"]; ok {
+            if t != "light" && t != "dark" {
+                return fmt.Errorf("invalid theme %q", t)
+            }
+            theme = t
+        }
+        return nil
+    },
+    RenderComponent: func(ctx context.Context, req *sdk.RenderRequest) (*sdk.RenderResponse, error) {
+        return &sdk.RenderResponse{HTML: `<div class="chart ` + theme + `"></div>`}, nil
+    },
+    GetAssets: func(ctx context.Context, renderMode string) ([]sdk.Asset, error) {
+        return []sdk.Asset{{
+            URLPath:  "/plugins/myplugin/" + theme + ".css",
+            FilePath: "assets/" + theme + ".css",
+        }}, nil
+    },
+})
+```
 
 ### Enriched linting
 

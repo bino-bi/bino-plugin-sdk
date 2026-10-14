@@ -41,6 +41,10 @@ type PluginOpts struct {
 	// Component rendering handler.
 	// Called to generate HTML for plugin-provided component kinds.
 	RenderComponent func(ctx context.Context, req *RenderRequest) (*RenderResponse, error)
+
+	// OnInit is called once when the host initializes the plugin, before any
+	// other callback. Returning an error makes the plugin fail to load.
+	OnInit func(ctx context.Context, info InitInfo) error
 }
 
 // Serve starts the plugin gRPC server and blocks until the host terminates it.
