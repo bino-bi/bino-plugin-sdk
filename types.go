@@ -20,6 +20,14 @@ type Kind struct {
 	Schema         []byte // JSON Schema bytes for this kind
 }
 
+// InitInfo is passed to the OnInit callback.
+type InitInfo struct {
+	Config      map[string]string // From bino.toml [plugins.<name>] config. Never nil.
+	ProjectRoot string
+	BinoVersion string
+	Host        HostClient // Host access for DuckDB queries, etc. May be nil.
+}
+
 // CollectRequest is passed to the CollectDataSource callback.
 type CollectRequest struct {
 	Name        string            // metadata.name from the document

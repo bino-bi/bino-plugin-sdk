@@ -2,6 +2,7 @@ package pluginsdk
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -70,10 +71,85 @@ func TestGRPCServer_Init(t *testing.T) {
 	if len(resp.GetDuckdbExtensions()) != 1 || resp.GetDuckdbExtensions()[0] != "httpfs" {
 		t.Fatalf("expected duckdb_extensions [httpfs], got %v", resp.GetDuckdbExtensions())
 	}
+}
 
-	// Verify config was stored.
-	if s.config["key"] != "val" {
-		t.Fatalf("expected config key=val, got %v", s.config)
+func TestGRPCServer_Init_OnInit(t *testing.T) {
+	var got InitInfo
+	calls := 0
+	s := newTestServer(&PluginOpts{
+		Name: "test-plugin",
+		OnInit: func(ctx context.Context, info InitInfo) error {
+			calls++
+			got = info
+			info.Config["added"] = "x"
+			return nil
+		},
+	})
+
+	reqConfig := map[string]string{"key": "val"}
+	resp, err := s.Init(context.Background(), &pluginv1.InitRequest{
+		Config:      reqConfig,
+		ProjectRoot: "/tmp/project",
+		BinoVersion: "0.15.0",
+	})
+	if err != nil {
+		t.Fatalf("Init failed: %v", err)
+	}
+	if resp.GetName() != "test-plugin" {
+		t.Fatalf("got name %q, want %q", resp.GetName(), "test-plugin")
+	}
+	if calls != 1 {
+		t.Fatalf("expected OnInit to be called once, got %d", calls)
+	}
+	if got.Config["key"] != "val" {
+		t.Fatalf("expected config key=val, got %v", got.Config)
+	}
+	if got.ProjectRoot != "/tmp/project" {
+		t.Fatalf("got project root %q, want %q", got.ProjectRoot, "/tmp/project")
+	}
+	if got.BinoVersion != "0.15.0" {
+		t.Fatalf("got bino version %q, want %q", got.BinoVersion, "0.15.0")
+	}
+	if got.Host != nil {
+		t.Fatal("expected nil Host without a host service")
+	}
+	if _, ok := reqConfig["added"]; ok {
+		t.Fatal("OnInit must receive a copy of the config, not the request map")
+	}
+}
+
+func TestGRPCServer_Init_OnInitNilConfig(t *testing.T) {
+	var got InitInfo
+	s := newTestServer(&PluginOpts{
+		OnInit: func(ctx context.Context, info InitInfo) error {
+			got = info
+			return nil
+		},
+	})
+
+	if _, err := s.Init(context.Background(), &pluginv1.InitRequest{}); err != nil {
+		t.Fatalf("Init failed: %v", err)
+	}
+	if got.Config == nil {
+		t.Fatal("expected non-nil Config when the request has no config")
+	}
+}
+
+func TestGRPCServer_Init_OnInitError(t *testing.T) {
+	errBadConfig := errors.New("bad config")
+	s := newTestServer(&PluginOpts{
+		Name: "test-plugin",
+		OnInit: func(ctx context.Context, info InitInfo) error {
+			return errBadConfig
+		},
+	})
+
+	resp, err := s.Init(context.Background(), &pluginv1.InitRequest{})
+	if !errors.Is(err, errBadConfig) {
+		t.Fatalf("expected errBadConfig, got %v", err)
+	}
+	if resp != nil {
+		t.Fatalf("expected nil manifest on error, got %v", resp)
 	}
 }
 
