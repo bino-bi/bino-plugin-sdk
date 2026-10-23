@@ -399,6 +399,61 @@ func TestGRPCServer_RenderComponent(t *testing.T) {
 	}
 }
 
+func TestGRPCServer_RenderComponent_DatasetsAndStyle(t *testing.T) {
+	var got *RenderRequest
+	s := newTestServer(&PluginOpts{
+		RenderComponent: func(ctx context.Context, req *RenderRequest) (*RenderResponse, error) {
+			got = req
+			return &RenderResponse{}, nil
+		},
+	})
+
+	_, err := s.RenderComponent(context.Background(), &pluginv1.RenderComponentRequest{
+		Kind: "TestChart",
+		Datasets: []*pluginv1.DatasetPayload{
+			{Name: "sales", JsonRows: []byte(`[{"a":1}]`)},
+		},
+		InheritedStyle: "corp",
+	})
+	if err != nil {
+		t.Fatalf("RenderComponent failed: %v", err)
+	}
+	if len(got.Datasets) != 1 || got.Datasets[0].Name != "sales" {
+		t.Fatalf("got datasets %+v, want one named sales", got.Datasets)
+	}
+	if string(got.Datasets[0].JSONRows) != `[{"a":1}]` {
+		t.Fatalf("got rows %q", got.Datasets[0].JSONRows)
+	}
+	if got.InheritedStyle != "corp" {
+		t.Fatalf("got inherited style %q, want corp", got.InheritedStyle)
+	}
+}
+
+func TestGRPCServer_RenderComponent_OlderHost(t *testing.T) {
+	var got *RenderRequest
+	s := newTestServer(&PluginOpts{
+		RenderComponent: func(ctx context.Context, req *RenderRequest) (*RenderResponse, error) {
+			got = req
+			return &RenderResponse{}, nil
+		},
+	})
+
+	// A host that does not know fields 5 and 6 never sets them.
+	_, err := s.RenderComponent(context.Background(), &pluginv1.RenderComponentRequest{
+		Kind: "TestChart",
+		Spec: []byte(`{"dataset":"sales"}`),
+	})
+	if err != nil {
+		t.Fatalf("RenderComponent failed: %v", err)
+	}
+	if len(got.Datasets) != 0 {
+		t.Fatalf("expected no datasets, got %+v", got.Datasets)
+	}
+	if got.InheritedStyle != "" {
+		t.Fatalf("expected empty inherited style, got %q", got.InheritedStyle)
+	}
+}
+
 func TestGRPCServer_RenderComponent_NotImplemented(t *testing.T) {
 	s := newTestServer(&PluginOpts{Name: "test"})
 

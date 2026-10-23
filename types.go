@@ -161,6 +161,20 @@ type RenderRequest struct {
 	Spec       []byte     // JSON of the effective spec
 	RenderMode string     // "build" or "preview"
 	Host       HostClient // Host access for DuckDB queries, etc. May be nil.
+
+	// Datasets holds the rows of the DataSets named in spec.dataset, in spec
+	// order. DataSource references ($name) are not included, and Columns may be
+	// empty. A DataSet named in spec.dataset that is missing here must be
+	// fetched with Host.GetDatasetResult: the host leaves a DataSet out when
+	// it would make the request too large, or when the host is older and
+	// sends no datasets at all. DataSource rows are neither sent nor served
+	// by GetDatasetResult.
+	Datasets []Dataset
+
+	// InheritedStyle is the name of the ComponentStyle inherited from the
+	// nearest enclosing report, page or card. Empty means none. The host
+	// never writes it into Spec.
+	InheritedStyle string
 }
 
 // RenderResponse is returned from the RenderComponent callback.

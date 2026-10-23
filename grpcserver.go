@@ -323,13 +323,23 @@ func (s *grpcServer) RenderComponent(ctx context.Context, req *pluginv1.RenderCo
 		return nil, fmt.Errorf("plugin %q does not implement RenderComponent", s.opts.Name)
 	}
 
-	resp, err := s.opts.RenderComponent(ctx, &RenderRequest{
-		Kind:       req.GetKind(),
-		Name:       req.GetName(),
-		Spec:       req.GetSpec(),
-		RenderMode: req.GetRenderMode(),
-		Host:       s.hostClient,
-	})
+	renderReq := &RenderRequest{
+		Kind:           req.GetKind(),
+		Name:           req.GetName(),
+		Spec:           req.GetSpec(),
+		RenderMode:     req.GetRenderMode(),
+		Host:           s.hostClient,
+		InheritedStyle: req.GetInheritedStyle(),
+	}
+	for _, ds := range req.GetDatasets() {
+		renderReq.Datasets = append(renderReq.Datasets, Dataset{
+			Name:     ds.GetName(),
+			JSONRows: ds.GetJsonRows(),
+			Columns:  ds.GetColumns(),
+		})
+	}
+
+	resp, err := s.opts.RenderComponent(ctx, renderReq)
 	if err != nil {
 		return nil, err
 	}

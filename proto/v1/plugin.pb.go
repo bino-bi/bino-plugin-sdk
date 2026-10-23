@@ -1916,13 +1916,23 @@ func (x *ListCommandsResponse) GetCommands() []*CommandDescriptor {
 }
 
 type RenderComponentRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Kind          string                 `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`                               // e.g., "ExampleChart"
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                               // metadata.name of the document
-	Spec          []byte                 `protobuf:"bytes,3,opt,name=spec,proto3" json:"spec,omitempty"`                               // JSON of the effective spec (after ref resolution + overrides)
-	RenderMode    string                 `protobuf:"bytes,4,opt,name=render_mode,json=renderMode,proto3" json:"render_mode,omitempty"` // "build" or "preview"
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Kind       string                 `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`                               // e.g., "ExampleChart"
+	Name       string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                               // metadata.name of the document
+	Spec       []byte                 `protobuf:"bytes,3,opt,name=spec,proto3" json:"spec,omitempty"`                               // JSON of the effective spec (after ref resolution + overrides)
+	RenderMode string                 `protobuf:"bytes,4,opt,name=render_mode,json=renderMode,proto3" json:"render_mode,omitempty"` // "build" or "preview"
+	// Rows of the DataSets named in spec.dataset, in spec order. DataSource
+	// references ($name) are not included. columns may be empty.
+	// A DataSet named in spec.dataset that is missing here must be fetched with
+	// Host.GetDatasetResult. Hosts leave a DataSet out when it would make the
+	// request too large, or when the host is older and sends no datasets at
+	// all. DataSource rows are neither sent nor served by GetDatasetResult.
+	Datasets []*DatasetPayload `protobuf:"bytes,5,rep,name=datasets,proto3" json:"datasets,omitempty"`
+	// Name of the ComponentStyle inherited from the nearest enclosing artefact,
+	// page or card. Empty means none. The host never writes it into spec.
+	InheritedStyle string `protobuf:"bytes,6,opt,name=inherited_style,json=inheritedStyle,proto3" json:"inherited_style,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *RenderComponentRequest) Reset() {
@@ -1979,6 +1989,20 @@ func (x *RenderComponentRequest) GetSpec() []byte {
 func (x *RenderComponentRequest) GetRenderMode() string {
 	if x != nil {
 		return x.RenderMode
+	}
+	return ""
+}
+
+func (x *RenderComponentRequest) GetDatasets() []*DatasetPayload {
+	if x != nil {
+		return x.Datasets
+	}
+	return nil
+}
+
+func (x *RenderComponentRequest) GetInheritedStyle() string {
+	if x != nil {
+		return x.InheritedStyle
 	}
 	return ""
 }
@@ -2583,13 +2607,15 @@ const file_proto_v1_plugin_proto_rawDesc = "" +
 	"\bseverity\x18\x04 \x01(\x0e2\x18.bino.plugin.v1.SeverityR\bseverity\"\x15\n" +
 	"\x13ListCommandsRequest\"U\n" +
 	"\x14ListCommandsResponse\x12=\n" +
-	"\bcommands\x18\x01 \x03(\v2!.bino.plugin.v1.CommandDescriptorR\bcommands\"u\n" +
+	"\bcommands\x18\x01 \x03(\v2!.bino.plugin.v1.CommandDescriptorR\bcommands\"\xda\x01\n" +
 	"\x16RenderComponentRequest\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
 	"\x04spec\x18\x03 \x01(\fR\x04spec\x12\x1f\n" +
 	"\vrender_mode\x18\x04 \x01(\tR\n" +
-	"renderMode\"k\n" +
+	"renderMode\x12:\n" +
+	"\bdatasets\x18\x05 \x03(\v2\x1e.bino.plugin.v1.DatasetPayloadR\bdatasets\x12'\n" +
+	"\x0finherited_style\x18\x06 \x01(\tR\x0einheritedStyle\"k\n" +
 	"\x17RenderComponentResponse\x12\x12\n" +
 	"\x04html\x18\x01 \x01(\tR\x04html\x12<\n" +
 	"\vdiagnostics\x18\x02 \x03(\v2\x1a.bino.plugin.v1.DiagnosticR\vdiagnostics\" \n" +
@@ -2731,44 +2757,45 @@ var file_proto_v1_plugin_proto_depIdxs = []int32{
 	14, // 22: bino.plugin.v1.HookResponse.findings:type_name -> bino.plugin.v1.LintFinding
 	1,  // 23: bino.plugin.v1.Diagnostic.severity:type_name -> bino.plugin.v1.Severity
 	18, // 24: bino.plugin.v1.ListCommandsResponse.commands:type_name -> bino.plugin.v1.CommandDescriptor
-	27, // 25: bino.plugin.v1.RenderComponentResponse.diagnostics:type_name -> bino.plugin.v1.Diagnostic
-	27, // 26: bino.plugin.v1.QueryResponse.diagnostics:type_name -> bino.plugin.v1.Diagnostic
-	24, // 27: bino.plugin.v1.GetDocumentResponse.document:type_name -> bino.plugin.v1.DocumentPayload
-	25, // 28: bino.plugin.v1.GetDatasetResultResponse.dataset:type_name -> bino.plugin.v1.DatasetPayload
-	24, // 29: bino.plugin.v1.ListDocumentsResponse.documents:type_name -> bino.plugin.v1.DocumentPayload
-	2,  // 30: bino.plugin.v1.BinoPlugin.Init:input_type -> bino.plugin.v1.InitRequest
-	4,  // 31: bino.plugin.v1.BinoPlugin.Shutdown:input_type -> bino.plugin.v1.ShutdownRequest
-	7,  // 32: bino.plugin.v1.BinoPlugin.GetSchemas:input_type -> bino.plugin.v1.GetSchemasRequest
-	9,  // 33: bino.plugin.v1.BinoPlugin.CollectDataSource:input_type -> bino.plugin.v1.CollectDataSourceRequest
-	11, // 34: bino.plugin.v1.BinoPlugin.Lint:input_type -> bino.plugin.v1.LintRequest
-	15, // 35: bino.plugin.v1.BinoPlugin.GetAssets:input_type -> bino.plugin.v1.GetAssetsRequest
-	28, // 36: bino.plugin.v1.BinoPlugin.ListCommands:input_type -> bino.plugin.v1.ListCommandsRequest
-	20, // 37: bino.plugin.v1.BinoPlugin.ExecCommand:input_type -> bino.plugin.v1.ExecCommandRequest
-	22, // 38: bino.plugin.v1.BinoPlugin.OnHook:input_type -> bino.plugin.v1.HookRequest
-	30, // 39: bino.plugin.v1.BinoPlugin.RenderComponent:input_type -> bino.plugin.v1.RenderComponentRequest
-	32, // 40: bino.plugin.v1.BinoHost.QueryDuckDB:input_type -> bino.plugin.v1.QueryRequest
-	34, // 41: bino.plugin.v1.BinoHost.GetDocument:input_type -> bino.plugin.v1.GetDocumentRequest
-	36, // 42: bino.plugin.v1.BinoHost.GetDatasetResult:input_type -> bino.plugin.v1.GetDatasetResultRequest
-	38, // 43: bino.plugin.v1.BinoHost.ListDocuments:input_type -> bino.plugin.v1.ListDocumentsRequest
-	3,  // 44: bino.plugin.v1.BinoPlugin.Init:output_type -> bino.plugin.v1.PluginManifest
-	5,  // 45: bino.plugin.v1.BinoPlugin.Shutdown:output_type -> bino.plugin.v1.ShutdownResponse
-	8,  // 46: bino.plugin.v1.BinoPlugin.GetSchemas:output_type -> bino.plugin.v1.GetSchemasResponse
-	10, // 47: bino.plugin.v1.BinoPlugin.CollectDataSource:output_type -> bino.plugin.v1.CollectDataSourceResponse
-	13, // 48: bino.plugin.v1.BinoPlugin.Lint:output_type -> bino.plugin.v1.LintResponse
-	16, // 49: bino.plugin.v1.BinoPlugin.GetAssets:output_type -> bino.plugin.v1.GetAssetsResponse
-	29, // 50: bino.plugin.v1.BinoPlugin.ListCommands:output_type -> bino.plugin.v1.ListCommandsResponse
-	21, // 51: bino.plugin.v1.BinoPlugin.ExecCommand:output_type -> bino.plugin.v1.ExecCommandOutput
-	26, // 52: bino.plugin.v1.BinoPlugin.OnHook:output_type -> bino.plugin.v1.HookResponse
-	31, // 53: bino.plugin.v1.BinoPlugin.RenderComponent:output_type -> bino.plugin.v1.RenderComponentResponse
-	33, // 54: bino.plugin.v1.BinoHost.QueryDuckDB:output_type -> bino.plugin.v1.QueryResponse
-	35, // 55: bino.plugin.v1.BinoHost.GetDocument:output_type -> bino.plugin.v1.GetDocumentResponse
-	37, // 56: bino.plugin.v1.BinoHost.GetDatasetResult:output_type -> bino.plugin.v1.GetDatasetResultResponse
-	39, // 57: bino.plugin.v1.BinoHost.ListDocuments:output_type -> bino.plugin.v1.ListDocumentsResponse
-	44, // [44:58] is the sub-list for method output_type
-	30, // [30:44] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	25, // 25: bino.plugin.v1.RenderComponentRequest.datasets:type_name -> bino.plugin.v1.DatasetPayload
+	27, // 26: bino.plugin.v1.RenderComponentResponse.diagnostics:type_name -> bino.plugin.v1.Diagnostic
+	27, // 27: bino.plugin.v1.QueryResponse.diagnostics:type_name -> bino.plugin.v1.Diagnostic
+	24, // 28: bino.plugin.v1.GetDocumentResponse.document:type_name -> bino.plugin.v1.DocumentPayload
+	25, // 29: bino.plugin.v1.GetDatasetResultResponse.dataset:type_name -> bino.plugin.v1.DatasetPayload
+	24, // 30: bino.plugin.v1.ListDocumentsResponse.documents:type_name -> bino.plugin.v1.DocumentPayload
+	2,  // 31: bino.plugin.v1.BinoPlugin.Init:input_type -> bino.plugin.v1.InitRequest
+	4,  // 32: bino.plugin.v1.BinoPlugin.Shutdown:input_type -> bino.plugin.v1.ShutdownRequest
+	7,  // 33: bino.plugin.v1.BinoPlugin.GetSchemas:input_type -> bino.plugin.v1.GetSchemasRequest
+	9,  // 34: bino.plugin.v1.BinoPlugin.CollectDataSource:input_type -> bino.plugin.v1.CollectDataSourceRequest
+	11, // 35: bino.plugin.v1.BinoPlugin.Lint:input_type -> bino.plugin.v1.LintRequest
+	15, // 36: bino.plugin.v1.BinoPlugin.GetAssets:input_type -> bino.plugin.v1.GetAssetsRequest
+	28, // 37: bino.plugin.v1.BinoPlugin.ListCommands:input_type -> bino.plugin.v1.ListCommandsRequest
+	20, // 38: bino.plugin.v1.BinoPlugin.ExecCommand:input_type -> bino.plugin.v1.ExecCommandRequest
+	22, // 39: bino.plugin.v1.BinoPlugin.OnHook:input_type -> bino.plugin.v1.HookRequest
+	30, // 40: bino.plugin.v1.BinoPlugin.RenderComponent:input_type -> bino.plugin.v1.RenderComponentRequest
+	32, // 41: bino.plugin.v1.BinoHost.QueryDuckDB:input_type -> bino.plugin.v1.QueryRequest
+	34, // 42: bino.plugin.v1.BinoHost.GetDocument:input_type -> bino.plugin.v1.GetDocumentRequest
+	36, // 43: bino.plugin.v1.BinoHost.GetDatasetResult:input_type -> bino.plugin.v1.GetDatasetResultRequest
+	38, // 44: bino.plugin.v1.BinoHost.ListDocuments:input_type -> bino.plugin.v1.ListDocumentsRequest
+	3,  // 45: bino.plugin.v1.BinoPlugin.Init:output_type -> bino.plugin.v1.PluginManifest
+	5,  // 46: bino.plugin.v1.BinoPlugin.Shutdown:output_type -> bino.plugin.v1.ShutdownResponse
+	8,  // 47: bino.plugin.v1.BinoPlugin.GetSchemas:output_type -> bino.plugin.v1.GetSchemasResponse
+	10, // 48: bino.plugin.v1.BinoPlugin.CollectDataSource:output_type -> bino.plugin.v1.CollectDataSourceResponse
+	13, // 49: bino.plugin.v1.BinoPlugin.Lint:output_type -> bino.plugin.v1.LintResponse
+	16, // 50: bino.plugin.v1.BinoPlugin.GetAssets:output_type -> bino.plugin.v1.GetAssetsResponse
+	29, // 51: bino.plugin.v1.BinoPlugin.ListCommands:output_type -> bino.plugin.v1.ListCommandsResponse
+	21, // 52: bino.plugin.v1.BinoPlugin.ExecCommand:output_type -> bino.plugin.v1.ExecCommandOutput
+	26, // 53: bino.plugin.v1.BinoPlugin.OnHook:output_type -> bino.plugin.v1.HookResponse
+	31, // 54: bino.plugin.v1.BinoPlugin.RenderComponent:output_type -> bino.plugin.v1.RenderComponentResponse
+	33, // 55: bino.plugin.v1.BinoHost.QueryDuckDB:output_type -> bino.plugin.v1.QueryResponse
+	35, // 56: bino.plugin.v1.BinoHost.GetDocument:output_type -> bino.plugin.v1.GetDocumentResponse
+	37, // 57: bino.plugin.v1.BinoHost.GetDatasetResult:output_type -> bino.plugin.v1.GetDatasetResultResponse
+	39, // 58: bino.plugin.v1.BinoHost.ListDocuments:output_type -> bino.plugin.v1.ListDocumentsResponse
+	45, // [45:59] is the sub-list for method output_type
+	31, // [31:45] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_proto_v1_plugin_proto_init() }

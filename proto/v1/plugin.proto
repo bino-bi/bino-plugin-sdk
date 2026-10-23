@@ -331,6 +331,18 @@ message RenderComponentRequest {
   string name = 2;          // metadata.name of the document
   bytes spec = 3;           // JSON of the effective spec (after ref resolution + overrides)
   string render_mode = 4;   // "build" or "preview"
+
+  // Rows of the DataSets named in spec.dataset, in spec order. DataSource
+  // references ($name) are not included. columns may be empty.
+  // A DataSet named in spec.dataset that is missing here must be fetched with
+  // Host.GetDatasetResult. Hosts leave a DataSet out when it would make the
+  // request too large, or when the host is older and sends no datasets at
+  // all. DataSource rows are neither sent nor served by GetDatasetResult.
+  repeated DatasetPayload datasets = 5;
+
+  // Name of the ComponentStyle inherited from the nearest enclosing artefact,
+  // page or card. Empty means none. The host never writes it into spec.
+  string inherited_style = 6;
 }
 
 message RenderComponentResponse {

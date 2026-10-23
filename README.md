@@ -117,7 +117,7 @@ plugin. Call this as the last line of `main()`.
 | `GetAssets` | `func(ctx, renderMode) ([]Asset, error)` | Dynamic asset callback |
 | `Commands` | `[]Command` | CLI subcommands |
 | `Hooks` | `map[string]HookFunc` | Pipeline hook callbacks |
-| `RenderComponent` | `func(ctx, *RenderRequest) (*RenderResponse, error)` | Component HTML renderer |
+| `RenderComponent` | `func(ctx, *RenderRequest) (*RenderResponse, error)` | Component HTML renderer; the request carries the spec, the `spec.dataset` rows and the inherited style |
 | `OnInit` | `func(ctx, InitInfo) error` | Called once at startup with the plugin config |
 
 ### Host access
@@ -138,6 +138,53 @@ CollectDataSource: func(ctx context.Context, req *sdk.CollectRequest) (*sdk.Coll
 
 Available on: `CollectRequest.Host`, `RenderRequest.Host`, `HookPayload.Host`,
 `LintContext.Host`, `InitInfo.Host`, and via `Command.RunWithHost`.
+
+### Component rendering
+
+`RenderRequest` carries what a component needs to draw:
+
+- `Spec`: JSON of the effective spec.
+- `Datasets`: the rows of the DataSets named in `spec.dataset`, in spec order.
+  DataSource references (`$name`) are not included, and `Columns` may be empty.
+- `InheritedStyle`: the name of the ComponentStyle set on the nearest enclosing
+  artefact, page or card, or `""`. The host never writes it into `Spec`. Read
+  the style itself with `Host.GetDocument(ctx, "ComponentStyle", name)`.
+
+A DataSet named in `spec.dataset` that is missing from `Datasets` must be
+fetched with `Host.GetDatasetResult`. The host leaves a DataSet out when it
+would make the request too large, or when the host is older and sends no
+datasets at all. DataSource rows are neither sent nor served by
+`GetDatasetResult`.
+
+```go
+RenderComponent: func(ctx context.Context, req *sdk.RenderRequest) (*sdk.RenderResponse, error) {
+    var spec struct {
+        Dataset string `json:"dataset"`
+    }
+    if err := json.Unmarshal(req.Spec, &spec); err != nil {
+        return nil, err
+    }
+    var rows []byte
+    for _, ds := range req.Datasets {
+        if ds.Name == spec.Dataset {
+            rows = ds.JSONRows
+        }
+    }
+    if rows == nil && req.Host != nil {
+        ds, err := req.Host.GetDatasetResult(ctx, spec.Dataset)
+        if err != nil {
+            return nil, err
+        }
+        if ds != nil {
+            rows = ds.JSONRows
+        }
+    }
+    return &sdk.RenderResponse{HTML: fmt.Sprintf(
+        `<myplugin-chart data-style="%s" data-rows="%s"></myplugin-chart>`,
+        html.EscapeString(req.InheritedStyle), html.EscapeString(string(rows)),
+    )}, nil
+},
+```
 
 ### Configuration
 
