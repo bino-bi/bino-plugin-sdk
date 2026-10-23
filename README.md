@@ -20,7 +20,7 @@ A single plugin binary can provide any combination of:
 - **Visual Components**: ship Web Component JS/CSS for custom chart types or
   widgets
 - **Lint Rules**: validate manifests with domain-specific rules (with optional
-  access to datasets and DuckDB)
+  access to datasets and host documents)
 - **Pipeline Hooks**: react to build events (post-dataset-execute,
   post-render-html)
 - **CLI Commands**: add subcommands to `bino plugin exec <name>:<command>`
@@ -125,16 +125,31 @@ plugin. Call this as the last line of `main()`.
 Plugin callbacks receive a `HostClient` for querying the bino host:
 
 ```go
-CollectDataSource: func(ctx context.Context, req *sdk.CollectRequest) (*sdk.CollectResponse, error) {
+RenderComponent: func(ctx context.Context, req *sdk.RenderRequest) (*sdk.RenderResponse, error) {
     if req.Host != nil {
-        // Query the host's DuckDB
-        result, _ := req.Host.QueryDuckDB(ctx, "SELECT count(*) as n FROM other_source")
-        // List loaded documents
-        docs, _ := req.Host.ListDocuments(ctx, "DataSource")
+        // Query an executed DataSet by its metadata.name.
+        result, err := req.Host.QueryDuckDB(ctx, "SELECT region, sum(amount) AS total FROM sales GROUP BY region")
+        if err != nil {
+            return nil, err
+        }
+        // List loaded documents.
+        docs, err := req.Host.ListDocuments(ctx, "DataSet")
+        if err != nil {
+            return nil, err
+        }
+        // ... use result.JSONRows and docs
     }
     // ...
 },
 ```
+
+`QueryDuckDB` runs in a throwaway DuckDB session that holds one view per
+executed DataSet of the artefact being rendered, named by `metadata.name`.
+DataSources are not visible. DataSets are there from the `post-dataset-execute`
+hook onward (`RenderComponent` and later hooks), not during
+`CollectDataSource`, and not in lint. The views need a bino release after
+v0.100.0. A failing query returns an error, and the result still carries the
+host's diagnostics.
 
 Available on: `CollectRequest.Host`, `RenderRequest.Host`, `HookPayload.Host`,
 `LintContext.Host`, `InitInfo.Host`, and via `Command.RunWithHost`.
@@ -228,17 +243,30 @@ sdk.Serve(&sdk.PluginOpts{
 
 ### Enriched linting
 
-Use `CheckWithContext` for lint rules that need datasets or host access:
+Use `CheckWithContext` for lint rules that need datasets or host access.
+`QueryDuckDB` is not available in lint; read the rows from `lc.Datasets`:
 
 ```go
 LintRules: []sdk.LintRule{{
     ID: "max-rows",
     CheckWithContext: func(ctx context.Context, docs []sdk.Document, lc *sdk.LintContext) []sdk.Finding {
-        if lc.Host != nil {
-            result, _ := lc.Host.QueryDuckDB(ctx, "SELECT count(*) as n FROM my_table")
-            // ... check row count
+        if !lc.DatasetsAvailable {
+            return nil
         }
-        return nil
+        var findings []sdk.Finding
+        for _, ds := range lc.Datasets {
+            var rows []json.RawMessage
+            if err := json.Unmarshal(ds.JSONRows, &rows); err != nil {
+                continue
+            }
+            if len(rows) > 10000 {
+                findings = append(findings, sdk.Finding{
+                    Message:  fmt.Sprintf("dataset %s has %d rows", ds.Name, len(rows)),
+                    Severity: sdk.Warning,
+                })
+            }
+        }
+        return findings
     },
 }},
 ```

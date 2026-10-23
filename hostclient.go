@@ -3,6 +3,7 @@ package pluginsdk
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	pluginv1 "github.com/bino-bi/bino-plugin-sdk/proto/v1"
 )
@@ -10,8 +11,16 @@ import (
 // HostClient allows a plugin to call back to the bino CLI host for
 // DuckDB queries, document access, and dataset retrieval.
 type HostClient interface {
-	// QueryDuckDB executes a SQL query against the host's DuckDB engine.
-	// Returns JSON rows and column names.
+	// QueryDuckDB runs a SQL query in a throwaway DuckDB session on the host
+	// and returns JSON rows and column names. The session holds one view per
+	// executed DataSet of the report being rendered, named by the DataSet's
+	// metadata.name. DataSources are not visible. DataSets are available from
+	// the post-dataset-execute hook onward (RenderComponent and later hooks),
+	// not during CollectDataSource, and not in lint. The views need a bino
+	// release after v0.100.0; older hosts show no DataSets.
+	//
+	// On a query error both values are set: the result carries the host's
+	// Diagnostics, and the error repeats the first Error diagnostic.
 	QueryDuckDB(ctx context.Context, sql string) (*QueryResult, error)
 
 	// GetDocument returns a single document by kind and name.
@@ -30,7 +39,7 @@ type HostClient interface {
 type QueryResult struct {
 	JSONRows    json.RawMessage // JSON array of row objects
 	Columns     []string
-	Diagnostics []Diagnostic // Non-fatal warnings from the host query.
+	Diagnostics []Diagnostic // Messages from the host query, including the error of a failed query.
 }
 
 // grpcHostClient implements HostClient via gRPC calls to the host.
@@ -43,11 +52,18 @@ func (c *grpcHostClient) QueryDuckDB(ctx context.Context, sql string) (*QueryRes
 	if err != nil {
 		return nil, err
 	}
-	return &QueryResult{
+	result := &QueryResult{
 		JSONRows:    resp.GetJsonRows(),
 		Columns:     resp.GetColumns(),
 		Diagnostics: diagnosticsFromProto(resp.GetDiagnostics()),
-	}, nil
+	}
+	// The host reports a failed query as an Error diagnostic, not as a gRPC error.
+	for _, d := range result.Diagnostics {
+		if d.Severity == Error {
+			return result, fmt.Errorf("host query: %s", d.Message)
+		}
+	}
+	return result, nil
 }
 
 func (c *grpcHostClient) GetDocument(ctx context.Context, kind, name string) (*Document, error) {
