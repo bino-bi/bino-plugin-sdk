@@ -2010,7 +2010,10 @@ func (x *RenderComponentRequest) GetInheritedStyle() string {
 type RenderComponentResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// HTML fragment to insert into the layout slot.
-	// Must be a single root element (e.g., <bn-example-chart ...>...</bn-example-chart>)
+	// Must be a single root element (e.g., <myplugin-chart ...>...</myplugin-chart>).
+	// Do not use the bn- or bino- prefix. No inline scripts: ship JS through
+	// GetAssets. Signal drawing with window.binoPlugin?.track(element, promise);
+	// see the bino plugins guide.
 	Html string `protobuf:"bytes,1,opt,name=html,proto3" json:"html,omitempty"`
 	// Diagnostics from rendering.
 	Diagnostics   []*Diagnostic `protobuf:"bytes,2,rep,name=diagnostics,proto3" json:"diagnostics,omitempty"`

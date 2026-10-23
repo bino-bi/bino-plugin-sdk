@@ -347,7 +347,10 @@ message RenderComponentRequest {
 
 message RenderComponentResponse {
   // HTML fragment to insert into the layout slot.
-  // Must be a single root element (e.g., <bn-example-chart ...>...</bn-example-chart>)
+  // Must be a single root element (e.g., <myplugin-chart ...>...</myplugin-chart>).
+  // Do not use the bn- or bino- prefix. No inline scripts: ship JS through
+  // GetAssets. Signal drawing with window.binoPlugin?.track(element, promise);
+  // see the bino plugins guide.
   string html = 1;
 
   // Diagnostics from rendering.

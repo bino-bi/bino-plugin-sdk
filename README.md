@@ -259,7 +259,7 @@ sdk.Serve(&sdk.PluginOpts{
         return nil
     },
     RenderComponent: func(ctx context.Context, req *sdk.RenderRequest) (*sdk.RenderResponse, error) {
-        return &sdk.RenderResponse{HTML: `<div class="chart ` + theme + `"></div>`}, nil
+        return &sdk.RenderResponse{HTML: `<myplugin-chart class="` + theme + `"></myplugin-chart>`}, nil
     },
     GetAssets: func(ctx context.Context, renderMode string) ([]sdk.Asset, error) {
         return []sdk.Asset{{
@@ -269,6 +269,43 @@ sdk.Serve(&sdk.PluginOpts{
     },
 })
 ```
+
+### Component front end
+
+The HTML from `RenderComponent` runs in the browser, in `bino build` (headless
+Chrome) and in `bino preview`. Follow these rules:
+
+- Return one root element with your own custom element tag, prefixed with your
+  plugin name (`myplugin-chart`). `bn-` and `bino-` are reserved.
+- Ship all JS through `GetAssets`. An inline `<script>` in the fragment runs in
+  build but not in preview.
+- Pass data as JSON in an attribute, list it in `observedAttributes` and redraw
+  in `attributeChangedCallback`. Preview updates attributes in place.
+- Wrap each draw in an async function and pass its promise to
+  `window.binoPlugin?.track(this, promise)`, in `connectedCallback` and on every
+  redraw. Where bino does not wait, the optional call does nothing.
+- Assets load in the order `GetAssets` returns them, with normal HTML rules
+  (classic scripts run before module scripts). Put a library before the element
+  that uses it.
+- Turn animations off. Size from the container when connected.
+
+```js
+class MypluginChart extends HTMLElement {
+  static observedAttributes = ["data-rows"];
+  connectedCallback() { this.redraw(); }
+  attributeChangedCallback() { if (this.isConnected) this.redraw(); }
+  redraw() {
+    const rows = JSON.parse(this.dataset.rows || "[]");
+    const draw = async () => drawChart(this, rows, { animation: false }); // your chart library
+    window.binoPlugin?.track(this, draw());
+  }
+}
+customElements.define("myplugin-chart", MypluginChart);
+```
+
+The first bino release after v0.100.0 waits for tracked draws before it prints
+a PDF. In that release `bino build` fails when a tracked draw rejects or a
+plugin element is never defined.
 
 ### Enriched linting
 
