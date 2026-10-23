@@ -15,16 +15,16 @@ and Chrome headless for PDF rendering. See the
 
 A single plugin binary can provide any combination of:
 
-- **Custom DataSources** — fetch data from SaaS APIs, proprietary databases, or
+- **Custom DataSources**: fetch data from SaaS APIs, proprietary databases, or
   any external system
-- **Visual Components** — ship Web Component JS/CSS for custom chart types or
+- **Visual Components**: ship Web Component JS/CSS for custom chart types or
   widgets
-- **Lint Rules** — validate manifests with domain-specific rules (with optional
+- **Lint Rules**: validate manifests with domain-specific rules (with optional
   access to datasets and DuckDB)
-- **Pipeline Hooks** — react to build events (post-load, post-dataset,
-  post-render-html, post-render-pdf)
-- **CLI Commands** — add subcommands to `bino plugin exec <name>:<command>`
-- **Host Queries** — call back to the bino host to execute DuckDB SQL, fetch
+- **Pipeline Hooks**: react to build events (post-dataset-execute,
+  post-render-html)
+- **CLI Commands**: add subcommands to `bino plugin exec <name>:<command>`
+- **Host Queries**: call back to the bino host to execute DuckDB SQL, fetch
   documents, or retrieve dataset results
 
 ## Quick start
@@ -207,7 +207,7 @@ working example demonstrating all capabilities:
 - JS/CSS asset injection
 - Three lint rules (basic + enriched with `CheckWithContext`)
 - CLI commands with `Run` and `RunWithHost`
-- Pipeline hooks (`post-load`, `post-dataset-execute`, `post-render-html`)
+- Pipeline hooks (`post-dataset-execute`, `post-render-html`)
 - Host access (`QueryDuckDB`, `ListDocuments`)
 
 ## Platform notes

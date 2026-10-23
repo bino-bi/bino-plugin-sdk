@@ -102,7 +102,7 @@ message KindRegistration {
 
 enum KindCategory {
   KIND_DATASOURCE = 0;    // Treated as a DataSource variant
-  KIND_COMPONENT = 1;     // Treated as a visual component (future)
+  KIND_COMPONENT = 1;     // Treated as a visual component
   KIND_CONFIG = 2;        // Treated as configuration (future)
   KIND_ARTIFACT = 3;      // Treated as an artifact type (future)
 }
@@ -266,15 +266,15 @@ message ExecCommandOutput {
 // ═══════════════════════════════════════════════════════════════════
 
 message HookRequest {
-  string checkpoint = 1;        // e.g., "post-load", "pre-render-html"
+  string checkpoint = 1;        // "post-dataset-execute" or "post-render-html"
   HookPayload payload = 2;
 }
 
 message HookPayload {
   // Depending on checkpoint, one of these is populated:
-  repeated DocumentPayload documents = 1;  // post-load, pre-render
+  repeated DocumentPayload documents = 1;  // no host checkpoint fills this today
   bytes html = 2;                          // post-render-html
-  string pdf_path = 3;                     // post-render-pdf
+  string pdf_path = 3;                     // no host checkpoint fills this today
   repeated DatasetPayload datasets = 4;    // post-dataset-execute
   map<string, string> metadata = 10;       // Always available
 }

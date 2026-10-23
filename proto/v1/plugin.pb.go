@@ -25,7 +25,7 @@ type KindCategory int32
 
 const (
 	KindCategory_KIND_DATASOURCE KindCategory = 0 // Treated as a DataSource variant
-	KindCategory_KIND_COMPONENT  KindCategory = 1 // Treated as a visual component (future)
+	KindCategory_KIND_COMPONENT  KindCategory = 1 // Treated as a visual component
 	KindCategory_KIND_CONFIG     KindCategory = 2 // Treated as configuration (future)
 	KindCategory_KIND_ARTIFACT   KindCategory = 3 // Treated as an artifact type (future)
 )
@@ -1432,7 +1432,7 @@ func (x *ExecCommandOutput) GetIsFinal() bool {
 
 type HookRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Checkpoint    string                 `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"` // e.g., "post-load", "pre-render-html"
+	Checkpoint    string                 `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"` // "post-dataset-execute" or "post-render-html"
 	Payload       *HookPayload           `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1485,9 +1485,9 @@ func (x *HookRequest) GetPayload() *HookPayload {
 type HookPayload struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Depending on checkpoint, one of these is populated:
-	Documents     []*DocumentPayload `protobuf:"bytes,1,rep,name=documents,proto3" json:"documents,omitempty"`                                                                          // post-load, pre-render
+	Documents     []*DocumentPayload `protobuf:"bytes,1,rep,name=documents,proto3" json:"documents,omitempty"`                                                                          // no host checkpoint fills this today
 	Html          []byte             `protobuf:"bytes,2,opt,name=html,proto3" json:"html,omitempty"`                                                                                    // post-render-html
-	PdfPath       string             `protobuf:"bytes,3,opt,name=pdf_path,json=pdfPath,proto3" json:"pdf_path,omitempty"`                                                               // post-render-pdf
+	PdfPath       string             `protobuf:"bytes,3,opt,name=pdf_path,json=pdfPath,proto3" json:"pdf_path,omitempty"`                                                               // no host checkpoint fills this today
 	Datasets      []*DatasetPayload  `protobuf:"bytes,4,rep,name=datasets,proto3" json:"datasets,omitempty"`                                                                            // post-dataset-execute
 	Metadata      map[string]string  `protobuf:"bytes,10,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Always available
 	unknownFields protoimpl.UnknownFields
