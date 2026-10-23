@@ -4,6 +4,7 @@ import (
 	"context"
 
 	goplugin "github.com/hashicorp/go-plugin"
+	"google.golang.org/grpc"
 )
 
 // PluginOpts configures the plugin's capabilities.
@@ -55,8 +56,19 @@ func Serve(opts *PluginOpts) {
 		Plugins: map[string]goplugin.Plugin{
 			"bino": &binoPlugin{opts: opts},
 		},
-		GRPCServer: goplugin.DefaultGRPCServer,
+		GRPCServer: newGRPCServer,
 	})
+}
+
+// maxMsgSize caps one request the plugin's server receives from the host.
+// gRPC's receive default is 4 MiB, too small for the dataset rows in a render
+// request or a whole page in a hook payload. go-plugin already sets
+// math.MaxInt32 on the broker connection to the host service.
+const maxMsgSize = 256 << 20
+
+// newGRPCServer serves the plugin with the raised receive limit.
+func newGRPCServer(opts []grpc.ServerOption) *grpc.Server {
+	return grpc.NewServer(append(opts, grpc.MaxRecvMsgSize(maxMsgSize))...)
 }
 
 // handshake must match the host's handshake config exactly.
