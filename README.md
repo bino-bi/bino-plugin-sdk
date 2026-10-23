@@ -120,6 +120,35 @@ plugin. Call this as the last line of `main()`.
 | `RenderComponent` | `func(ctx, *RenderRequest) (*RenderResponse, error)` | Component HTML renderer; the request carries the spec, the `spec.dataset` rows and the inherited style |
 | `OnInit` | `func(ctx, InitInfo) error` | Called once at startup with the plugin config |
 
+### Kind schemas
+
+The host validates every spec of a plugin kind against `Kind.Schema`. Derive the
+schema from the Go struct you decode the spec into, so the two cannot drift:
+
+```go
+type ChartSpec struct {
+    Dataset string   `json:"dataset" jsonschema:"Name of the DataSet to plot"`
+    Series  []string `json:"series,omitempty"`
+}
+
+Kinds: []sdk.Kind{{Name: "HighchartsChart", Category: sdk.KindComponent,
+    Schema: sdk.SchemaFor[ChartSpec]()}},
+```
+
+`SchemaFor` emits JSON Schema draft 2020-12, the draft the host uses:
+
+- Property names come from `json` tags.
+- Fields with `omitempty` or `omitzero` are optional; all others are required.
+- Structs reject unknown properties (`additionalProperties: false`).
+- The `jsonschema` struct tag is plain description text only. A tag that starts
+  with `WORD=` (for example `description=...`) is rejected.
+- Slices are typed `["null","array"]`, so `null` passes for a slice field.
+- A `json.RawMessage` field accepts any value. A `[]byte` field is a string or
+  `null`, as `encoding/json` writes it in base64.
+
+`SchemaFor` panics when the type cannot be expressed as a schema, for example a
+`func` field or a rejected tag. It runs at startup, so the mistake shows at once.
+
 ### Host access
 
 Plugin callbacks receive a `HostClient` for querying the bino host:
@@ -314,6 +343,7 @@ bino-plugin-sdk/
   types.go                 # Public types (Kind, Document, Finding, Asset, ...)
   grpcserver.go            # gRPC server implementation
   hostclient.go            # HostClient for calling back to the bino host
+  schema.go                # SchemaFor: JSON Schema from a Go spec struct
   convert.go               # Proto ↔ Go type conversions
 ```
 
