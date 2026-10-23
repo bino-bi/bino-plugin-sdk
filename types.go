@@ -87,11 +87,17 @@ type LintRule struct {
 }
 
 // Asset describes a JS/CSS file provided by the plugin.
+//
+// The SDK sends an asset as a script when IsModule is set or MediaType names
+// JavaScript, and as a style for any other MediaType. With an empty MediaType,
+// a .js or .mjs suffix on URLPath makes it a script. The host links a style as
+// a stylesheet unless its media type is a font, an image or another non-CSS
+// type, and serves it either way.
 type Asset struct {
 	URLPath   string // Serving path, e.g., "/plugins/salesforce/chart.js"
 	FilePath  string // Path to file on disk
 	Content   []byte // Alternative: inline content
-	MediaType string // MIME type (e.g., "application/javascript"); auto-detected if empty
+	MediaType string // MIME type (e.g., "application/javascript"); decides scripts vs styles when set
 	IsModule  bool   // For <script type="module">
 }
 

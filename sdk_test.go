@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"testing"
 
 	pluginv1 "github.com/bino-bi/bino-plugin-sdk/proto/v1"
@@ -267,6 +268,39 @@ func TestGRPCServer_GetAssets(t *testing.T) {
 	}
 	if len(resp.GetStyles()) != 1 {
 		t.Fatalf("expected 1 style, got %d", len(resp.GetStyles()))
+	}
+}
+
+func TestGRPCServer_GetAssets_MediaType(t *testing.T) {
+	s := newTestServer(&PluginOpts{
+		Assets: []Asset{
+			{URLPath: "/plugins/x/hc", MediaType: "text/javascript"},
+			{URLPath: "/plugins/x/f.woff2"},
+			{URLPath: "/plugins/x/m", IsModule: true},
+			{URLPath: "/plugins/x/a.js", MediaType: "text/css"},
+			{URLPath: "/plugins/x/lib", MediaType: "Application/JavaScript; charset=utf-8"},
+		},
+	})
+
+	resp, err := s.GetAssets(context.Background(), &pluginv1.GetAssetsRequest{RenderMode: "build"})
+	if err != nil {
+		t.Fatalf("GetAssets failed: %v", err)
+	}
+	scripts := make([]string, 0, len(resp.GetScripts()))
+	styles := make([]string, 0, len(resp.GetStyles()))
+	for _, a := range resp.GetScripts() {
+		scripts = append(scripts, a.GetUrlPath())
+	}
+	for _, a := range resp.GetStyles() {
+		styles = append(styles, a.GetUrlPath())
+	}
+	wantScripts := []string{"/plugins/x/hc", "/plugins/x/m", "/plugins/x/lib"}
+	wantStyles := []string{"/plugins/x/f.woff2", "/plugins/x/a.js"}
+	if !slices.Equal(scripts, wantScripts) {
+		t.Fatalf("got scripts %v, want %v", scripts, wantScripts)
+	}
+	if !slices.Equal(styles, wantStyles) {
+		t.Fatalf("got styles %v, want %v", styles, wantStyles)
 	}
 }
 

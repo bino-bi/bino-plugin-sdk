@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"mime"
 	"os"
 	"strings"
 	"sync"
@@ -179,7 +180,7 @@ func (s *grpcServer) GetAssets(ctx context.Context, req *pluginv1.GetAssetsReque
 	resp := &pluginv1.GetAssetsResponse{}
 	for _, a := range assets {
 		asset := assetToProto(a)
-		if isScript(a.URLPath) {
+		if isScriptAsset(a) {
 			resp.Scripts = append(resp.Scripts, asset)
 		} else {
 			resp.Styles = append(resp.Styles, asset)
@@ -348,6 +349,22 @@ func (s *grpcServer) RenderComponent(ctx context.Context, req *pluginv1.RenderCo
 		Html:        resp.HTML,
 		Diagnostics: diagnosticsToProto(resp.Diagnostics),
 	}, nil
+}
+
+// isScriptAsset decides whether an asset goes to scripts or styles. IsModule
+// wins, then a set MediaType, then the URL suffix.
+func isScriptAsset(a Asset) bool {
+	if a.IsModule {
+		return true
+	}
+	if a.MediaType != "" {
+		mt, _, err := mime.ParseMediaType(a.MediaType)
+		if err != nil {
+			mt = strings.ToLower(a.MediaType)
+		}
+		return strings.Contains(mt, "javascript")
+	}
+	return isScript(a.URLPath)
 }
 
 // isScript returns true if the URL path looks like a JavaScript file.
