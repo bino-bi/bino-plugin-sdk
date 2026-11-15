@@ -19,6 +19,10 @@ type PluginOpts struct {
 	// DuckDB extensions this plugin needs loaded.
 	DuckDBExtensions []string
 
+	// DuckDB macros the host registers in every session it opens, so users can
+	// call them in DataSet SQL.
+	SessionMacros []SessionMacro
+
 	// DataSource collection handler.
 	CollectDataSource func(ctx context.Context, req *CollectRequest) (*CollectResponse, error)
 

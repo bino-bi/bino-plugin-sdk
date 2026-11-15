@@ -20,6 +20,19 @@ type Kind struct {
 	Schema         []byte // JSON Schema bytes for this kind
 }
 
+// SessionMacro is one DuckDB macro the host registers in its sessions.
+type SessionMacro struct {
+	// Name must start with "<plugin name>_".
+	Name string
+	// SQL is one "CREATE OR REPLACE MACRO <Name> ..." statement.
+	SQL string
+	// SmokeSQL is an optional query that calls the macro on a few inline rows.
+	// The host runs it once at load. DuckDB checks at creation only what does
+	// not depend on the arguments, so without it a wrong column in a table
+	// macro can show up only in a user's query.
+	SmokeSQL string
+}
+
 // InitInfo is passed to the OnInit callback.
 type InitInfo struct {
 	Config      map[string]string // From bino.toml [plugins.<name>] config. Never nil.

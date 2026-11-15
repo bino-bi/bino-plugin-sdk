@@ -82,6 +82,14 @@ message PluginManifest {
   bool provides_assets = 13;
   repeated CommandDescriptor commands = 14;
   repeated string hooks = 15;        // checkpoints this plugin wants to receive
+  repeated SessionMacro session_macros = 16;  // DuckDB macros the host registers in its sessions
+}
+
+// SessionMacro is one DuckDB macro the host registers in every session it opens.
+message SessionMacro {
+  string name = 1;       // must start with "<plugin name>_"
+  string sql = 2;        // one "CREATE OR REPLACE MACRO <name> ..." statement
+  string smoke_sql = 3;  // optional query that calls the macro; the host runs it once at load
 }
 
 message ShutdownRequest {}

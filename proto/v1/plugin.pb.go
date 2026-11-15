@@ -201,7 +201,8 @@ type PluginManifest struct {
 	ProvidesLinter   bool                 `protobuf:"varint,12,opt,name=provides_linter,json=providesLinter,proto3" json:"provides_linter,omitempty"`
 	ProvidesAssets   bool                 `protobuf:"varint,13,opt,name=provides_assets,json=providesAssets,proto3" json:"provides_assets,omitempty"`
 	Commands         []*CommandDescriptor `protobuf:"bytes,14,rep,name=commands,proto3" json:"commands,omitempty"`
-	Hooks            []string             `protobuf:"bytes,15,rep,name=hooks,proto3" json:"hooks,omitempty"` // checkpoints this plugin wants to receive
+	Hooks            []string             `protobuf:"bytes,15,rep,name=hooks,proto3" json:"hooks,omitempty"`                                      // checkpoints this plugin wants to receive
+	SessionMacros    []*SessionMacro      `protobuf:"bytes,16,rep,name=session_macros,json=sessionMacros,proto3" json:"session_macros,omitempty"` // DuckDB macros the host registers in its sessions
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -299,6 +300,74 @@ func (x *PluginManifest) GetHooks() []string {
 	return nil
 }
 
+func (x *PluginManifest) GetSessionMacros() []*SessionMacro {
+	if x != nil {
+		return x.SessionMacros
+	}
+	return nil
+}
+
+// SessionMacro is one DuckDB macro the host registers in every session it opens.
+type SessionMacro struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`                         // must start with "<plugin name>_"
+	Sql           string                 `protobuf:"bytes,2,opt,name=sql,proto3" json:"sql,omitempty"`                           // one "CREATE OR REPLACE MACRO <name> ..." statement
+	SmokeSql      string                 `protobuf:"bytes,3,opt,name=smoke_sql,json=smokeSql,proto3" json:"smoke_sql,omitempty"` // optional query that calls the macro; the host runs it once at load
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SessionMacro) Reset() {
+	*x = SessionMacro{}
+	mi := &file_proto_v1_plugin_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SessionMacro) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SessionMacro) ProtoMessage() {}
+
+func (x *SessionMacro) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_v1_plugin_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SessionMacro.ProtoReflect.Descriptor instead.
+func (*SessionMacro) Descriptor() ([]byte, []int) {
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SessionMacro) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SessionMacro) GetSql() string {
+	if x != nil {
+		return x.Sql
+	}
+	return ""
+}
+
+func (x *SessionMacro) GetSmokeSql() string {
+	if x != nil {
+		return x.SmokeSql
+	}
+	return ""
+}
+
 type ShutdownRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -307,7 +376,7 @@ type ShutdownRequest struct {
 
 func (x *ShutdownRequest) Reset() {
 	*x = ShutdownRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[2]
+	mi := &file_proto_v1_plugin_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -319,7 +388,7 @@ func (x *ShutdownRequest) String() string {
 func (*ShutdownRequest) ProtoMessage() {}
 
 func (x *ShutdownRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[2]
+	mi := &file_proto_v1_plugin_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -332,7 +401,7 @@ func (x *ShutdownRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShutdownRequest.ProtoReflect.Descriptor instead.
 func (*ShutdownRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{2}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{3}
 }
 
 type ShutdownResponse struct {
@@ -343,7 +412,7 @@ type ShutdownResponse struct {
 
 func (x *ShutdownResponse) Reset() {
 	*x = ShutdownResponse{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[3]
+	mi := &file_proto_v1_plugin_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -355,7 +424,7 @@ func (x *ShutdownResponse) String() string {
 func (*ShutdownResponse) ProtoMessage() {}
 
 func (x *ShutdownResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[3]
+	mi := &file_proto_v1_plugin_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -368,7 +437,7 @@ func (x *ShutdownResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShutdownResponse.ProtoReflect.Descriptor instead.
 func (*ShutdownResponse) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{3}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{4}
 }
 
 type KindRegistration struct {
@@ -384,7 +453,7 @@ type KindRegistration struct {
 
 func (x *KindRegistration) Reset() {
 	*x = KindRegistration{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[4]
+	mi := &file_proto_v1_plugin_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -396,7 +465,7 @@ func (x *KindRegistration) String() string {
 func (*KindRegistration) ProtoMessage() {}
 
 func (x *KindRegistration) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[4]
+	mi := &file_proto_v1_plugin_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -409,7 +478,7 @@ func (x *KindRegistration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KindRegistration.ProtoReflect.Descriptor instead.
 func (*KindRegistration) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{4}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *KindRegistration) GetKindName() string {
@@ -441,7 +510,7 @@ type GetSchemasRequest struct {
 
 func (x *GetSchemasRequest) Reset() {
 	*x = GetSchemasRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[5]
+	mi := &file_proto_v1_plugin_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -453,7 +522,7 @@ func (x *GetSchemasRequest) String() string {
 func (*GetSchemasRequest) ProtoMessage() {}
 
 func (x *GetSchemasRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[5]
+	mi := &file_proto_v1_plugin_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -466,7 +535,7 @@ func (x *GetSchemasRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSchemasRequest.ProtoReflect.Descriptor instead.
 func (*GetSchemasRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{5}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{6}
 }
 
 type GetSchemasResponse struct {
@@ -479,7 +548,7 @@ type GetSchemasResponse struct {
 
 func (x *GetSchemasResponse) Reset() {
 	*x = GetSchemasResponse{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[6]
+	mi := &file_proto_v1_plugin_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -491,7 +560,7 @@ func (x *GetSchemasResponse) String() string {
 func (*GetSchemasResponse) ProtoMessage() {}
 
 func (x *GetSchemasResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[6]
+	mi := &file_proto_v1_plugin_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -504,7 +573,7 @@ func (x *GetSchemasResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSchemasResponse.ProtoReflect.Descriptor instead.
 func (*GetSchemasResponse) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{6}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetSchemasResponse) GetSchemas() map[string][]byte {
@@ -526,7 +595,7 @@ type CollectDataSourceRequest struct {
 
 func (x *CollectDataSourceRequest) Reset() {
 	*x = CollectDataSourceRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[7]
+	mi := &file_proto_v1_plugin_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -538,7 +607,7 @@ func (x *CollectDataSourceRequest) String() string {
 func (*CollectDataSourceRequest) ProtoMessage() {}
 
 func (x *CollectDataSourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[7]
+	mi := &file_proto_v1_plugin_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -551,7 +620,7 @@ func (x *CollectDataSourceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectDataSourceRequest.ProtoReflect.Descriptor instead.
 func (*CollectDataSourceRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{7}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CollectDataSourceRequest) GetName() string {
@@ -601,7 +670,7 @@ type CollectDataSourceResponse struct {
 
 func (x *CollectDataSourceResponse) Reset() {
 	*x = CollectDataSourceResponse{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[8]
+	mi := &file_proto_v1_plugin_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -613,7 +682,7 @@ func (x *CollectDataSourceResponse) String() string {
 func (*CollectDataSourceResponse) ProtoMessage() {}
 
 func (x *CollectDataSourceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[8]
+	mi := &file_proto_v1_plugin_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -626,7 +695,7 @@ func (x *CollectDataSourceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectDataSourceResponse.ProtoReflect.Descriptor instead.
 func (*CollectDataSourceResponse) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{8}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CollectDataSourceResponse) GetJsonRows() []byte {
@@ -679,7 +748,7 @@ type LintRequest struct {
 
 func (x *LintRequest) Reset() {
 	*x = LintRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[9]
+	mi := &file_proto_v1_plugin_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -691,7 +760,7 @@ func (x *LintRequest) String() string {
 func (*LintRequest) ProtoMessage() {}
 
 func (x *LintRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[9]
+	mi := &file_proto_v1_plugin_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -704,7 +773,7 @@ func (x *LintRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LintRequest.ProtoReflect.Descriptor instead.
 func (*LintRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{9}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *LintRequest) GetDocuments() []*LintDocument {
@@ -748,7 +817,7 @@ type LintDocument struct {
 
 func (x *LintDocument) Reset() {
 	*x = LintDocument{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[10]
+	mi := &file_proto_v1_plugin_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -760,7 +829,7 @@ func (x *LintDocument) String() string {
 func (*LintDocument) ProtoMessage() {}
 
 func (x *LintDocument) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[10]
+	mi := &file_proto_v1_plugin_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -773,7 +842,7 @@ func (x *LintDocument) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LintDocument.ProtoReflect.Descriptor instead.
 func (*LintDocument) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{10}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *LintDocument) GetFile() string {
@@ -820,7 +889,7 @@ type LintResponse struct {
 
 func (x *LintResponse) Reset() {
 	*x = LintResponse{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[11]
+	mi := &file_proto_v1_plugin_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -832,7 +901,7 @@ func (x *LintResponse) String() string {
 func (*LintResponse) ProtoMessage() {}
 
 func (x *LintResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[11]
+	mi := &file_proto_v1_plugin_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -845,7 +914,7 @@ func (x *LintResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LintResponse.ProtoReflect.Descriptor instead.
 func (*LintResponse) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{11}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *LintResponse) GetFindings() []*LintFinding {
@@ -871,7 +940,7 @@ type LintFinding struct {
 
 func (x *LintFinding) Reset() {
 	*x = LintFinding{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[12]
+	mi := &file_proto_v1_plugin_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -883,7 +952,7 @@ func (x *LintFinding) String() string {
 func (*LintFinding) ProtoMessage() {}
 
 func (x *LintFinding) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[12]
+	mi := &file_proto_v1_plugin_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -896,7 +965,7 @@ func (x *LintFinding) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LintFinding.ProtoReflect.Descriptor instead.
 func (*LintFinding) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{12}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *LintFinding) GetRuleId() string {
@@ -964,7 +1033,7 @@ type GetAssetsRequest struct {
 
 func (x *GetAssetsRequest) Reset() {
 	*x = GetAssetsRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[13]
+	mi := &file_proto_v1_plugin_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -976,7 +1045,7 @@ func (x *GetAssetsRequest) String() string {
 func (*GetAssetsRequest) ProtoMessage() {}
 
 func (x *GetAssetsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[13]
+	mi := &file_proto_v1_plugin_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -989,7 +1058,7 @@ func (x *GetAssetsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAssetsRequest.ProtoReflect.Descriptor instead.
 func (*GetAssetsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{13}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetAssetsRequest) GetRenderMode() string {
@@ -1011,7 +1080,7 @@ type GetAssetsResponse struct {
 
 func (x *GetAssetsResponse) Reset() {
 	*x = GetAssetsResponse{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[14]
+	mi := &file_proto_v1_plugin_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1023,7 +1092,7 @@ func (x *GetAssetsResponse) String() string {
 func (*GetAssetsResponse) ProtoMessage() {}
 
 func (x *GetAssetsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[14]
+	mi := &file_proto_v1_plugin_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1036,7 +1105,7 @@ func (x *GetAssetsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAssetsResponse.ProtoReflect.Descriptor instead.
 func (*GetAssetsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{14}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetAssetsResponse) GetScripts() []*AssetFile {
@@ -1071,7 +1140,7 @@ type AssetFile struct {
 
 func (x *AssetFile) Reset() {
 	*x = AssetFile{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[15]
+	mi := &file_proto_v1_plugin_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1083,7 +1152,7 @@ func (x *AssetFile) String() string {
 func (*AssetFile) ProtoMessage() {}
 
 func (x *AssetFile) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[15]
+	mi := &file_proto_v1_plugin_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1096,7 +1165,7 @@ func (x *AssetFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssetFile.ProtoReflect.Descriptor instead.
 func (*AssetFile) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{15}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *AssetFile) GetUrlPath() string {
@@ -1147,7 +1216,7 @@ type CommandDescriptor struct {
 
 func (x *CommandDescriptor) Reset() {
 	*x = CommandDescriptor{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[16]
+	mi := &file_proto_v1_plugin_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1159,7 +1228,7 @@ func (x *CommandDescriptor) String() string {
 func (*CommandDescriptor) ProtoMessage() {}
 
 func (x *CommandDescriptor) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[16]
+	mi := &file_proto_v1_plugin_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1172,7 +1241,7 @@ func (x *CommandDescriptor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommandDescriptor.ProtoReflect.Descriptor instead.
 func (*CommandDescriptor) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{16}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *CommandDescriptor) GetName() string {
@@ -1224,7 +1293,7 @@ type FlagDescriptor struct {
 
 func (x *FlagDescriptor) Reset() {
 	*x = FlagDescriptor{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[17]
+	mi := &file_proto_v1_plugin_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1236,7 +1305,7 @@ func (x *FlagDescriptor) String() string {
 func (*FlagDescriptor) ProtoMessage() {}
 
 func (x *FlagDescriptor) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[17]
+	mi := &file_proto_v1_plugin_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1249,7 +1318,7 @@ func (x *FlagDescriptor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlagDescriptor.ProtoReflect.Descriptor instead.
 func (*FlagDescriptor) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{17}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *FlagDescriptor) GetName() string {
@@ -1306,7 +1375,7 @@ type ExecCommandRequest struct {
 
 func (x *ExecCommandRequest) Reset() {
 	*x = ExecCommandRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[18]
+	mi := &file_proto_v1_plugin_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1318,7 +1387,7 @@ func (x *ExecCommandRequest) String() string {
 func (*ExecCommandRequest) ProtoMessage() {}
 
 func (x *ExecCommandRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[18]
+	mi := &file_proto_v1_plugin_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1331,7 +1400,7 @@ func (x *ExecCommandRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecCommandRequest.ProtoReflect.Descriptor instead.
 func (*ExecCommandRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{18}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ExecCommandRequest) GetCommand() string {
@@ -1374,7 +1443,7 @@ type ExecCommandOutput struct {
 
 func (x *ExecCommandOutput) Reset() {
 	*x = ExecCommandOutput{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[19]
+	mi := &file_proto_v1_plugin_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1386,7 +1455,7 @@ func (x *ExecCommandOutput) String() string {
 func (*ExecCommandOutput) ProtoMessage() {}
 
 func (x *ExecCommandOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[19]
+	mi := &file_proto_v1_plugin_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1399,7 +1468,7 @@ func (x *ExecCommandOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecCommandOutput.ProtoReflect.Descriptor instead.
 func (*ExecCommandOutput) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{19}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ExecCommandOutput) GetStdout() []byte {
@@ -1440,7 +1509,7 @@ type HookRequest struct {
 
 func (x *HookRequest) Reset() {
 	*x = HookRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[20]
+	mi := &file_proto_v1_plugin_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1452,7 +1521,7 @@ func (x *HookRequest) String() string {
 func (*HookRequest) ProtoMessage() {}
 
 func (x *HookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[20]
+	mi := &file_proto_v1_plugin_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1465,7 +1534,7 @@ func (x *HookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HookRequest.ProtoReflect.Descriptor instead.
 func (*HookRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{20}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *HookRequest) GetCheckpoint() string {
@@ -1496,7 +1565,7 @@ type HookPayload struct {
 
 func (x *HookPayload) Reset() {
 	*x = HookPayload{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[21]
+	mi := &file_proto_v1_plugin_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1508,7 +1577,7 @@ func (x *HookPayload) String() string {
 func (*HookPayload) ProtoMessage() {}
 
 func (x *HookPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[21]
+	mi := &file_proto_v1_plugin_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1521,7 +1590,7 @@ func (x *HookPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HookPayload.ProtoReflect.Descriptor instead.
 func (*HookPayload) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{21}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *HookPayload) GetDocuments() []*DocumentPayload {
@@ -1572,7 +1641,7 @@ type DocumentPayload struct {
 
 func (x *DocumentPayload) Reset() {
 	*x = DocumentPayload{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[22]
+	mi := &file_proto_v1_plugin_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1584,7 +1653,7 @@ func (x *DocumentPayload) String() string {
 func (*DocumentPayload) ProtoMessage() {}
 
 func (x *DocumentPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[22]
+	mi := &file_proto_v1_plugin_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1597,7 +1666,7 @@ func (x *DocumentPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DocumentPayload.ProtoReflect.Descriptor instead.
 func (*DocumentPayload) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{22}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *DocumentPayload) GetFile() string {
@@ -1646,7 +1715,7 @@ type DatasetPayload struct {
 
 func (x *DatasetPayload) Reset() {
 	*x = DatasetPayload{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[23]
+	mi := &file_proto_v1_plugin_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1658,7 +1727,7 @@ func (x *DatasetPayload) String() string {
 func (*DatasetPayload) ProtoMessage() {}
 
 func (x *DatasetPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[23]
+	mi := &file_proto_v1_plugin_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1671,7 +1740,7 @@ func (x *DatasetPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DatasetPayload.ProtoReflect.Descriptor instead.
 func (*DatasetPayload) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{23}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *DatasetPayload) GetName() string {
@@ -1711,7 +1780,7 @@ type HookResponse struct {
 
 func (x *HookResponse) Reset() {
 	*x = HookResponse{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[24]
+	mi := &file_proto_v1_plugin_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1723,7 +1792,7 @@ func (x *HookResponse) String() string {
 func (*HookResponse) ProtoMessage() {}
 
 func (x *HookResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[24]
+	mi := &file_proto_v1_plugin_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1736,7 +1805,7 @@ func (x *HookResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HookResponse.ProtoReflect.Descriptor instead.
 func (*HookResponse) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{24}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *HookResponse) GetModified() bool {
@@ -1779,7 +1848,7 @@ type Diagnostic struct {
 
 func (x *Diagnostic) Reset() {
 	*x = Diagnostic{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[25]
+	mi := &file_proto_v1_plugin_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1791,7 +1860,7 @@ func (x *Diagnostic) String() string {
 func (*Diagnostic) ProtoMessage() {}
 
 func (x *Diagnostic) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[25]
+	mi := &file_proto_v1_plugin_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1804,7 +1873,7 @@ func (x *Diagnostic) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Diagnostic.ProtoReflect.Descriptor instead.
 func (*Diagnostic) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{25}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *Diagnostic) GetSource() string {
@@ -1843,7 +1912,7 @@ type ListCommandsRequest struct {
 
 func (x *ListCommandsRequest) Reset() {
 	*x = ListCommandsRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[26]
+	mi := &file_proto_v1_plugin_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1855,7 +1924,7 @@ func (x *ListCommandsRequest) String() string {
 func (*ListCommandsRequest) ProtoMessage() {}
 
 func (x *ListCommandsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[26]
+	mi := &file_proto_v1_plugin_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1868,7 +1937,7 @@ func (x *ListCommandsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCommandsRequest.ProtoReflect.Descriptor instead.
 func (*ListCommandsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{26}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{27}
 }
 
 type ListCommandsResponse struct {
@@ -1880,7 +1949,7 @@ type ListCommandsResponse struct {
 
 func (x *ListCommandsResponse) Reset() {
 	*x = ListCommandsResponse{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[27]
+	mi := &file_proto_v1_plugin_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1892,7 +1961,7 @@ func (x *ListCommandsResponse) String() string {
 func (*ListCommandsResponse) ProtoMessage() {}
 
 func (x *ListCommandsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[27]
+	mi := &file_proto_v1_plugin_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1905,7 +1974,7 @@ func (x *ListCommandsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCommandsResponse.ProtoReflect.Descriptor instead.
 func (*ListCommandsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{27}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ListCommandsResponse) GetCommands() []*CommandDescriptor {
@@ -1937,7 +2006,7 @@ type RenderComponentRequest struct {
 
 func (x *RenderComponentRequest) Reset() {
 	*x = RenderComponentRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[28]
+	mi := &file_proto_v1_plugin_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1949,7 +2018,7 @@ func (x *RenderComponentRequest) String() string {
 func (*RenderComponentRequest) ProtoMessage() {}
 
 func (x *RenderComponentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[28]
+	mi := &file_proto_v1_plugin_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1962,7 +2031,7 @@ func (x *RenderComponentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenderComponentRequest.ProtoReflect.Descriptor instead.
 func (*RenderComponentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{28}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *RenderComponentRequest) GetKind() string {
@@ -2023,7 +2092,7 @@ type RenderComponentResponse struct {
 
 func (x *RenderComponentResponse) Reset() {
 	*x = RenderComponentResponse{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[29]
+	mi := &file_proto_v1_plugin_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2035,7 +2104,7 @@ func (x *RenderComponentResponse) String() string {
 func (*RenderComponentResponse) ProtoMessage() {}
 
 func (x *RenderComponentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[29]
+	mi := &file_proto_v1_plugin_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2048,7 +2117,7 @@ func (x *RenderComponentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenderComponentResponse.ProtoReflect.Descriptor instead.
 func (*RenderComponentResponse) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{29}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *RenderComponentResponse) GetHtml() string {
@@ -2074,7 +2143,7 @@ type QueryRequest struct {
 
 func (x *QueryRequest) Reset() {
 	*x = QueryRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[30]
+	mi := &file_proto_v1_plugin_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2086,7 +2155,7 @@ func (x *QueryRequest) String() string {
 func (*QueryRequest) ProtoMessage() {}
 
 func (x *QueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[30]
+	mi := &file_proto_v1_plugin_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2099,7 +2168,7 @@ func (x *QueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryRequest.ProtoReflect.Descriptor instead.
 func (*QueryRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{30}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *QueryRequest) GetSql() string {
@@ -2120,7 +2189,7 @@ type QueryResponse struct {
 
 func (x *QueryResponse) Reset() {
 	*x = QueryResponse{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[31]
+	mi := &file_proto_v1_plugin_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2132,7 +2201,7 @@ func (x *QueryResponse) String() string {
 func (*QueryResponse) ProtoMessage() {}
 
 func (x *QueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[31]
+	mi := &file_proto_v1_plugin_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2145,7 +2214,7 @@ func (x *QueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryResponse.ProtoReflect.Descriptor instead.
 func (*QueryResponse) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{31}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *QueryResponse) GetJsonRows() []byte {
@@ -2179,7 +2248,7 @@ type GetDocumentRequest struct {
 
 func (x *GetDocumentRequest) Reset() {
 	*x = GetDocumentRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[32]
+	mi := &file_proto_v1_plugin_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2191,7 +2260,7 @@ func (x *GetDocumentRequest) String() string {
 func (*GetDocumentRequest) ProtoMessage() {}
 
 func (x *GetDocumentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[32]
+	mi := &file_proto_v1_plugin_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2204,7 +2273,7 @@ func (x *GetDocumentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDocumentRequest.ProtoReflect.Descriptor instead.
 func (*GetDocumentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{32}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *GetDocumentRequest) GetKind() string {
@@ -2231,7 +2300,7 @@ type GetDocumentResponse struct {
 
 func (x *GetDocumentResponse) Reset() {
 	*x = GetDocumentResponse{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[33]
+	mi := &file_proto_v1_plugin_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2243,7 +2312,7 @@ func (x *GetDocumentResponse) String() string {
 func (*GetDocumentResponse) ProtoMessage() {}
 
 func (x *GetDocumentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[33]
+	mi := &file_proto_v1_plugin_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2256,7 +2325,7 @@ func (x *GetDocumentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDocumentResponse.ProtoReflect.Descriptor instead.
 func (*GetDocumentResponse) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{33}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *GetDocumentResponse) GetDocument() *DocumentPayload {
@@ -2282,7 +2351,7 @@ type GetDatasetResultRequest struct {
 
 func (x *GetDatasetResultRequest) Reset() {
 	*x = GetDatasetResultRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[34]
+	mi := &file_proto_v1_plugin_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2294,7 +2363,7 @@ func (x *GetDatasetResultRequest) String() string {
 func (*GetDatasetResultRequest) ProtoMessage() {}
 
 func (x *GetDatasetResultRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[34]
+	mi := &file_proto_v1_plugin_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2307,7 +2376,7 @@ func (x *GetDatasetResultRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDatasetResultRequest.ProtoReflect.Descriptor instead.
 func (*GetDatasetResultRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{34}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *GetDatasetResultRequest) GetName() string {
@@ -2327,7 +2396,7 @@ type GetDatasetResultResponse struct {
 
 func (x *GetDatasetResultResponse) Reset() {
 	*x = GetDatasetResultResponse{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[35]
+	mi := &file_proto_v1_plugin_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2339,7 +2408,7 @@ func (x *GetDatasetResultResponse) String() string {
 func (*GetDatasetResultResponse) ProtoMessage() {}
 
 func (x *GetDatasetResultResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[35]
+	mi := &file_proto_v1_plugin_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2352,7 +2421,7 @@ func (x *GetDatasetResultResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDatasetResultResponse.ProtoReflect.Descriptor instead.
 func (*GetDatasetResultResponse) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{35}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *GetDatasetResultResponse) GetDataset() *DatasetPayload {
@@ -2378,7 +2447,7 @@ type ListDocumentsRequest struct {
 
 func (x *ListDocumentsRequest) Reset() {
 	*x = ListDocumentsRequest{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[36]
+	mi := &file_proto_v1_plugin_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2390,7 +2459,7 @@ func (x *ListDocumentsRequest) String() string {
 func (*ListDocumentsRequest) ProtoMessage() {}
 
 func (x *ListDocumentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[36]
+	mi := &file_proto_v1_plugin_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2403,7 +2472,7 @@ func (x *ListDocumentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDocumentsRequest.ProtoReflect.Descriptor instead.
 func (*ListDocumentsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{36}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ListDocumentsRequest) GetKindFilter() string {
@@ -2422,7 +2491,7 @@ type ListDocumentsResponse struct {
 
 func (x *ListDocumentsResponse) Reset() {
 	*x = ListDocumentsResponse{}
-	mi := &file_proto_v1_plugin_proto_msgTypes[37]
+	mi := &file_proto_v1_plugin_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2434,7 +2503,7 @@ func (x *ListDocumentsResponse) String() string {
 func (*ListDocumentsResponse) ProtoMessage() {}
 
 func (x *ListDocumentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_v1_plugin_proto_msgTypes[37]
+	mi := &file_proto_v1_plugin_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2447,7 +2516,7 @@ func (x *ListDocumentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDocumentsResponse.ProtoReflect.Descriptor instead.
 func (*ListDocumentsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{37}
+	return file_proto_v1_plugin_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ListDocumentsResponse) GetDocuments() []*DocumentPayload {
@@ -2469,7 +2538,7 @@ const file_proto_v1_plugin_proto_rawDesc = "" +
 	"\x0fhost_service_id\x18\x04 \x01(\rR\rhostServiceId\x1a9\n" +
 	"\vConfigEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xec\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb1\x03\n" +
 	"\x0ePluginManifest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12 \n" +
@@ -2480,7 +2549,12 @@ const file_proto_v1_plugin_proto_rawDesc = "" +
 	"\x0fprovides_linter\x18\f \x01(\bR\x0eprovidesLinter\x12'\n" +
 	"\x0fprovides_assets\x18\r \x01(\bR\x0eprovidesAssets\x12=\n" +
 	"\bcommands\x18\x0e \x03(\v2!.bino.plugin.v1.CommandDescriptorR\bcommands\x12\x14\n" +
-	"\x05hooks\x18\x0f \x03(\tR\x05hooks\"\x11\n" +
+	"\x05hooks\x18\x0f \x03(\tR\x05hooks\x12C\n" +
+	"\x0esession_macros\x18\x10 \x03(\v2\x1c.bino.plugin.v1.SessionMacroR\rsessionMacros\"Q\n" +
+	"\fSessionMacro\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
+	"\x03sql\x18\x02 \x01(\tR\x03sql\x12\x1b\n" +
+	"\tsmoke_sql\x18\x03 \x01(\tR\bsmokeSql\"\x11\n" +
 	"\x0fShutdownRequest\"\x12\n" +
 	"\x10ShutdownResponse\"\x92\x01\n" +
 	"\x10KindRegistration\x12\x1b\n" +
@@ -2685,120 +2759,122 @@ func file_proto_v1_plugin_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_v1_plugin_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_v1_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
+var file_proto_v1_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
 var file_proto_v1_plugin_proto_goTypes = []any{
 	(KindCategory)(0),                 // 0: bino.plugin.v1.KindCategory
 	(Severity)(0),                     // 1: bino.plugin.v1.Severity
 	(*InitRequest)(nil),               // 2: bino.plugin.v1.InitRequest
 	(*PluginManifest)(nil),            // 3: bino.plugin.v1.PluginManifest
-	(*ShutdownRequest)(nil),           // 4: bino.plugin.v1.ShutdownRequest
-	(*ShutdownResponse)(nil),          // 5: bino.plugin.v1.ShutdownResponse
-	(*KindRegistration)(nil),          // 6: bino.plugin.v1.KindRegistration
-	(*GetSchemasRequest)(nil),         // 7: bino.plugin.v1.GetSchemasRequest
-	(*GetSchemasResponse)(nil),        // 8: bino.plugin.v1.GetSchemasResponse
-	(*CollectDataSourceRequest)(nil),  // 9: bino.plugin.v1.CollectDataSourceRequest
-	(*CollectDataSourceResponse)(nil), // 10: bino.plugin.v1.CollectDataSourceResponse
-	(*LintRequest)(nil),               // 11: bino.plugin.v1.LintRequest
-	(*LintDocument)(nil),              // 12: bino.plugin.v1.LintDocument
-	(*LintResponse)(nil),              // 13: bino.plugin.v1.LintResponse
-	(*LintFinding)(nil),               // 14: bino.plugin.v1.LintFinding
-	(*GetAssetsRequest)(nil),          // 15: bino.plugin.v1.GetAssetsRequest
-	(*GetAssetsResponse)(nil),         // 16: bino.plugin.v1.GetAssetsResponse
-	(*AssetFile)(nil),                 // 17: bino.plugin.v1.AssetFile
-	(*CommandDescriptor)(nil),         // 18: bino.plugin.v1.CommandDescriptor
-	(*FlagDescriptor)(nil),            // 19: bino.plugin.v1.FlagDescriptor
-	(*ExecCommandRequest)(nil),        // 20: bino.plugin.v1.ExecCommandRequest
-	(*ExecCommandOutput)(nil),         // 21: bino.plugin.v1.ExecCommandOutput
-	(*HookRequest)(nil),               // 22: bino.plugin.v1.HookRequest
-	(*HookPayload)(nil),               // 23: bino.plugin.v1.HookPayload
-	(*DocumentPayload)(nil),           // 24: bino.plugin.v1.DocumentPayload
-	(*DatasetPayload)(nil),            // 25: bino.plugin.v1.DatasetPayload
-	(*HookResponse)(nil),              // 26: bino.plugin.v1.HookResponse
-	(*Diagnostic)(nil),                // 27: bino.plugin.v1.Diagnostic
-	(*ListCommandsRequest)(nil),       // 28: bino.plugin.v1.ListCommandsRequest
-	(*ListCommandsResponse)(nil),      // 29: bino.plugin.v1.ListCommandsResponse
-	(*RenderComponentRequest)(nil),    // 30: bino.plugin.v1.RenderComponentRequest
-	(*RenderComponentResponse)(nil),   // 31: bino.plugin.v1.RenderComponentResponse
-	(*QueryRequest)(nil),              // 32: bino.plugin.v1.QueryRequest
-	(*QueryResponse)(nil),             // 33: bino.plugin.v1.QueryResponse
-	(*GetDocumentRequest)(nil),        // 34: bino.plugin.v1.GetDocumentRequest
-	(*GetDocumentResponse)(nil),       // 35: bino.plugin.v1.GetDocumentResponse
-	(*GetDatasetResultRequest)(nil),   // 36: bino.plugin.v1.GetDatasetResultRequest
-	(*GetDatasetResultResponse)(nil),  // 37: bino.plugin.v1.GetDatasetResultResponse
-	(*ListDocumentsRequest)(nil),      // 38: bino.plugin.v1.ListDocumentsRequest
-	(*ListDocumentsResponse)(nil),     // 39: bino.plugin.v1.ListDocumentsResponse
-	nil,                               // 40: bino.plugin.v1.InitRequest.ConfigEntry
-	nil,                               // 41: bino.plugin.v1.GetSchemasResponse.SchemasEntry
-	nil,                               // 42: bino.plugin.v1.CollectDataSourceRequest.EnvEntry
-	nil,                               // 43: bino.plugin.v1.CollectDataSourceResponse.ColumnTypesEntry
-	nil,                               // 44: bino.plugin.v1.ExecCommandRequest.FlagsEntry
-	nil,                               // 45: bino.plugin.v1.HookPayload.MetadataEntry
+	(*SessionMacro)(nil),              // 4: bino.plugin.v1.SessionMacro
+	(*ShutdownRequest)(nil),           // 5: bino.plugin.v1.ShutdownRequest
+	(*ShutdownResponse)(nil),          // 6: bino.plugin.v1.ShutdownResponse
+	(*KindRegistration)(nil),          // 7: bino.plugin.v1.KindRegistration
+	(*GetSchemasRequest)(nil),         // 8: bino.plugin.v1.GetSchemasRequest
+	(*GetSchemasResponse)(nil),        // 9: bino.plugin.v1.GetSchemasResponse
+	(*CollectDataSourceRequest)(nil),  // 10: bino.plugin.v1.CollectDataSourceRequest
+	(*CollectDataSourceResponse)(nil), // 11: bino.plugin.v1.CollectDataSourceResponse
+	(*LintRequest)(nil),               // 12: bino.plugin.v1.LintRequest
+	(*LintDocument)(nil),              // 13: bino.plugin.v1.LintDocument
+	(*LintResponse)(nil),              // 14: bino.plugin.v1.LintResponse
+	(*LintFinding)(nil),               // 15: bino.plugin.v1.LintFinding
+	(*GetAssetsRequest)(nil),          // 16: bino.plugin.v1.GetAssetsRequest
+	(*GetAssetsResponse)(nil),         // 17: bino.plugin.v1.GetAssetsResponse
+	(*AssetFile)(nil),                 // 18: bino.plugin.v1.AssetFile
+	(*CommandDescriptor)(nil),         // 19: bino.plugin.v1.CommandDescriptor
+	(*FlagDescriptor)(nil),            // 20: bino.plugin.v1.FlagDescriptor
+	(*ExecCommandRequest)(nil),        // 21: bino.plugin.v1.ExecCommandRequest
+	(*ExecCommandOutput)(nil),         // 22: bino.plugin.v1.ExecCommandOutput
+	(*HookRequest)(nil),               // 23: bino.plugin.v1.HookRequest
+	(*HookPayload)(nil),               // 24: bino.plugin.v1.HookPayload
+	(*DocumentPayload)(nil),           // 25: bino.plugin.v1.DocumentPayload
+	(*DatasetPayload)(nil),            // 26: bino.plugin.v1.DatasetPayload
+	(*HookResponse)(nil),              // 27: bino.plugin.v1.HookResponse
+	(*Diagnostic)(nil),                // 28: bino.plugin.v1.Diagnostic
+	(*ListCommandsRequest)(nil),       // 29: bino.plugin.v1.ListCommandsRequest
+	(*ListCommandsResponse)(nil),      // 30: bino.plugin.v1.ListCommandsResponse
+	(*RenderComponentRequest)(nil),    // 31: bino.plugin.v1.RenderComponentRequest
+	(*RenderComponentResponse)(nil),   // 32: bino.plugin.v1.RenderComponentResponse
+	(*QueryRequest)(nil),              // 33: bino.plugin.v1.QueryRequest
+	(*QueryResponse)(nil),             // 34: bino.plugin.v1.QueryResponse
+	(*GetDocumentRequest)(nil),        // 35: bino.plugin.v1.GetDocumentRequest
+	(*GetDocumentResponse)(nil),       // 36: bino.plugin.v1.GetDocumentResponse
+	(*GetDatasetResultRequest)(nil),   // 37: bino.plugin.v1.GetDatasetResultRequest
+	(*GetDatasetResultResponse)(nil),  // 38: bino.plugin.v1.GetDatasetResultResponse
+	(*ListDocumentsRequest)(nil),      // 39: bino.plugin.v1.ListDocumentsRequest
+	(*ListDocumentsResponse)(nil),     // 40: bino.plugin.v1.ListDocumentsResponse
+	nil,                               // 41: bino.plugin.v1.InitRequest.ConfigEntry
+	nil,                               // 42: bino.plugin.v1.GetSchemasResponse.SchemasEntry
+	nil,                               // 43: bino.plugin.v1.CollectDataSourceRequest.EnvEntry
+	nil,                               // 44: bino.plugin.v1.CollectDataSourceResponse.ColumnTypesEntry
+	nil,                               // 45: bino.plugin.v1.ExecCommandRequest.FlagsEntry
+	nil,                               // 46: bino.plugin.v1.HookPayload.MetadataEntry
 }
 var file_proto_v1_plugin_proto_depIdxs = []int32{
-	40, // 0: bino.plugin.v1.InitRequest.config:type_name -> bino.plugin.v1.InitRequest.ConfigEntry
-	6,  // 1: bino.plugin.v1.PluginManifest.kinds:type_name -> bino.plugin.v1.KindRegistration
-	18, // 2: bino.plugin.v1.PluginManifest.commands:type_name -> bino.plugin.v1.CommandDescriptor
-	0,  // 3: bino.plugin.v1.KindRegistration.category:type_name -> bino.plugin.v1.KindCategory
-	41, // 4: bino.plugin.v1.GetSchemasResponse.schemas:type_name -> bino.plugin.v1.GetSchemasResponse.SchemasEntry
-	42, // 5: bino.plugin.v1.CollectDataSourceRequest.env:type_name -> bino.plugin.v1.CollectDataSourceRequest.EnvEntry
-	43, // 6: bino.plugin.v1.CollectDataSourceResponse.column_types:type_name -> bino.plugin.v1.CollectDataSourceResponse.ColumnTypesEntry
-	27, // 7: bino.plugin.v1.CollectDataSourceResponse.diagnostics:type_name -> bino.plugin.v1.Diagnostic
-	12, // 8: bino.plugin.v1.LintRequest.documents:type_name -> bino.plugin.v1.LintDocument
-	25, // 9: bino.plugin.v1.LintRequest.datasets:type_name -> bino.plugin.v1.DatasetPayload
-	14, // 10: bino.plugin.v1.LintResponse.findings:type_name -> bino.plugin.v1.LintFinding
-	1,  // 11: bino.plugin.v1.LintFinding.severity:type_name -> bino.plugin.v1.Severity
-	17, // 12: bino.plugin.v1.GetAssetsResponse.scripts:type_name -> bino.plugin.v1.AssetFile
-	17, // 13: bino.plugin.v1.GetAssetsResponse.styles:type_name -> bino.plugin.v1.AssetFile
-	19, // 14: bino.plugin.v1.CommandDescriptor.flags:type_name -> bino.plugin.v1.FlagDescriptor
-	44, // 15: bino.plugin.v1.ExecCommandRequest.flags:type_name -> bino.plugin.v1.ExecCommandRequest.FlagsEntry
-	23, // 16: bino.plugin.v1.HookRequest.payload:type_name -> bino.plugin.v1.HookPayload
-	24, // 17: bino.plugin.v1.HookPayload.documents:type_name -> bino.plugin.v1.DocumentPayload
-	25, // 18: bino.plugin.v1.HookPayload.datasets:type_name -> bino.plugin.v1.DatasetPayload
-	45, // 19: bino.plugin.v1.HookPayload.metadata:type_name -> bino.plugin.v1.HookPayload.MetadataEntry
-	23, // 20: bino.plugin.v1.HookResponse.payload:type_name -> bino.plugin.v1.HookPayload
-	27, // 21: bino.plugin.v1.HookResponse.diagnostics:type_name -> bino.plugin.v1.Diagnostic
-	14, // 22: bino.plugin.v1.HookResponse.findings:type_name -> bino.plugin.v1.LintFinding
-	1,  // 23: bino.plugin.v1.Diagnostic.severity:type_name -> bino.plugin.v1.Severity
-	18, // 24: bino.plugin.v1.ListCommandsResponse.commands:type_name -> bino.plugin.v1.CommandDescriptor
-	25, // 25: bino.plugin.v1.RenderComponentRequest.datasets:type_name -> bino.plugin.v1.DatasetPayload
-	27, // 26: bino.plugin.v1.RenderComponentResponse.diagnostics:type_name -> bino.plugin.v1.Diagnostic
-	27, // 27: bino.plugin.v1.QueryResponse.diagnostics:type_name -> bino.plugin.v1.Diagnostic
-	24, // 28: bino.plugin.v1.GetDocumentResponse.document:type_name -> bino.plugin.v1.DocumentPayload
-	25, // 29: bino.plugin.v1.GetDatasetResultResponse.dataset:type_name -> bino.plugin.v1.DatasetPayload
-	24, // 30: bino.plugin.v1.ListDocumentsResponse.documents:type_name -> bino.plugin.v1.DocumentPayload
-	2,  // 31: bino.plugin.v1.BinoPlugin.Init:input_type -> bino.plugin.v1.InitRequest
-	4,  // 32: bino.plugin.v1.BinoPlugin.Shutdown:input_type -> bino.plugin.v1.ShutdownRequest
-	7,  // 33: bino.plugin.v1.BinoPlugin.GetSchemas:input_type -> bino.plugin.v1.GetSchemasRequest
-	9,  // 34: bino.plugin.v1.BinoPlugin.CollectDataSource:input_type -> bino.plugin.v1.CollectDataSourceRequest
-	11, // 35: bino.plugin.v1.BinoPlugin.Lint:input_type -> bino.plugin.v1.LintRequest
-	15, // 36: bino.plugin.v1.BinoPlugin.GetAssets:input_type -> bino.plugin.v1.GetAssetsRequest
-	28, // 37: bino.plugin.v1.BinoPlugin.ListCommands:input_type -> bino.plugin.v1.ListCommandsRequest
-	20, // 38: bino.plugin.v1.BinoPlugin.ExecCommand:input_type -> bino.plugin.v1.ExecCommandRequest
-	22, // 39: bino.plugin.v1.BinoPlugin.OnHook:input_type -> bino.plugin.v1.HookRequest
-	30, // 40: bino.plugin.v1.BinoPlugin.RenderComponent:input_type -> bino.plugin.v1.RenderComponentRequest
-	32, // 41: bino.plugin.v1.BinoHost.QueryDuckDB:input_type -> bino.plugin.v1.QueryRequest
-	34, // 42: bino.plugin.v1.BinoHost.GetDocument:input_type -> bino.plugin.v1.GetDocumentRequest
-	36, // 43: bino.plugin.v1.BinoHost.GetDatasetResult:input_type -> bino.plugin.v1.GetDatasetResultRequest
-	38, // 44: bino.plugin.v1.BinoHost.ListDocuments:input_type -> bino.plugin.v1.ListDocumentsRequest
-	3,  // 45: bino.plugin.v1.BinoPlugin.Init:output_type -> bino.plugin.v1.PluginManifest
-	5,  // 46: bino.plugin.v1.BinoPlugin.Shutdown:output_type -> bino.plugin.v1.ShutdownResponse
-	8,  // 47: bino.plugin.v1.BinoPlugin.GetSchemas:output_type -> bino.plugin.v1.GetSchemasResponse
-	10, // 48: bino.plugin.v1.BinoPlugin.CollectDataSource:output_type -> bino.plugin.v1.CollectDataSourceResponse
-	13, // 49: bino.plugin.v1.BinoPlugin.Lint:output_type -> bino.plugin.v1.LintResponse
-	16, // 50: bino.plugin.v1.BinoPlugin.GetAssets:output_type -> bino.plugin.v1.GetAssetsResponse
-	29, // 51: bino.plugin.v1.BinoPlugin.ListCommands:output_type -> bino.plugin.v1.ListCommandsResponse
-	21, // 52: bino.plugin.v1.BinoPlugin.ExecCommand:output_type -> bino.plugin.v1.ExecCommandOutput
-	26, // 53: bino.plugin.v1.BinoPlugin.OnHook:output_type -> bino.plugin.v1.HookResponse
-	31, // 54: bino.plugin.v1.BinoPlugin.RenderComponent:output_type -> bino.plugin.v1.RenderComponentResponse
-	33, // 55: bino.plugin.v1.BinoHost.QueryDuckDB:output_type -> bino.plugin.v1.QueryResponse
-	35, // 56: bino.plugin.v1.BinoHost.GetDocument:output_type -> bino.plugin.v1.GetDocumentResponse
-	37, // 57: bino.plugin.v1.BinoHost.GetDatasetResult:output_type -> bino.plugin.v1.GetDatasetResultResponse
-	39, // 58: bino.plugin.v1.BinoHost.ListDocuments:output_type -> bino.plugin.v1.ListDocumentsResponse
-	45, // [45:59] is the sub-list for method output_type
-	31, // [31:45] is the sub-list for method input_type
-	31, // [31:31] is the sub-list for extension type_name
-	31, // [31:31] is the sub-list for extension extendee
-	0,  // [0:31] is the sub-list for field type_name
+	41, // 0: bino.plugin.v1.InitRequest.config:type_name -> bino.plugin.v1.InitRequest.ConfigEntry
+	7,  // 1: bino.plugin.v1.PluginManifest.kinds:type_name -> bino.plugin.v1.KindRegistration
+	19, // 2: bino.plugin.v1.PluginManifest.commands:type_name -> bino.plugin.v1.CommandDescriptor
+	4,  // 3: bino.plugin.v1.PluginManifest.session_macros:type_name -> bino.plugin.v1.SessionMacro
+	0,  // 4: bino.plugin.v1.KindRegistration.category:type_name -> bino.plugin.v1.KindCategory
+	42, // 5: bino.plugin.v1.GetSchemasResponse.schemas:type_name -> bino.plugin.v1.GetSchemasResponse.SchemasEntry
+	43, // 6: bino.plugin.v1.CollectDataSourceRequest.env:type_name -> bino.plugin.v1.CollectDataSourceRequest.EnvEntry
+	44, // 7: bino.plugin.v1.CollectDataSourceResponse.column_types:type_name -> bino.plugin.v1.CollectDataSourceResponse.ColumnTypesEntry
+	28, // 8: bino.plugin.v1.CollectDataSourceResponse.diagnostics:type_name -> bino.plugin.v1.Diagnostic
+	13, // 9: bino.plugin.v1.LintRequest.documents:type_name -> bino.plugin.v1.LintDocument
+	26, // 10: bino.plugin.v1.LintRequest.datasets:type_name -> bino.plugin.v1.DatasetPayload
+	15, // 11: bino.plugin.v1.LintResponse.findings:type_name -> bino.plugin.v1.LintFinding
+	1,  // 12: bino.plugin.v1.LintFinding.severity:type_name -> bino.plugin.v1.Severity
+	18, // 13: bino.plugin.v1.GetAssetsResponse.scripts:type_name -> bino.plugin.v1.AssetFile
+	18, // 14: bino.plugin.v1.GetAssetsResponse.styles:type_name -> bino.plugin.v1.AssetFile
+	20, // 15: bino.plugin.v1.CommandDescriptor.flags:type_name -> bino.plugin.v1.FlagDescriptor
+	45, // 16: bino.plugin.v1.ExecCommandRequest.flags:type_name -> bino.plugin.v1.ExecCommandRequest.FlagsEntry
+	24, // 17: bino.plugin.v1.HookRequest.payload:type_name -> bino.plugin.v1.HookPayload
+	25, // 18: bino.plugin.v1.HookPayload.documents:type_name -> bino.plugin.v1.DocumentPayload
+	26, // 19: bino.plugin.v1.HookPayload.datasets:type_name -> bino.plugin.v1.DatasetPayload
+	46, // 20: bino.plugin.v1.HookPayload.metadata:type_name -> bino.plugin.v1.HookPayload.MetadataEntry
+	24, // 21: bino.plugin.v1.HookResponse.payload:type_name -> bino.plugin.v1.HookPayload
+	28, // 22: bino.plugin.v1.HookResponse.diagnostics:type_name -> bino.plugin.v1.Diagnostic
+	15, // 23: bino.plugin.v1.HookResponse.findings:type_name -> bino.plugin.v1.LintFinding
+	1,  // 24: bino.plugin.v1.Diagnostic.severity:type_name -> bino.plugin.v1.Severity
+	19, // 25: bino.plugin.v1.ListCommandsResponse.commands:type_name -> bino.plugin.v1.CommandDescriptor
+	26, // 26: bino.plugin.v1.RenderComponentRequest.datasets:type_name -> bino.plugin.v1.DatasetPayload
+	28, // 27: bino.plugin.v1.RenderComponentResponse.diagnostics:type_name -> bino.plugin.v1.Diagnostic
+	28, // 28: bino.plugin.v1.QueryResponse.diagnostics:type_name -> bino.plugin.v1.Diagnostic
+	25, // 29: bino.plugin.v1.GetDocumentResponse.document:type_name -> bino.plugin.v1.DocumentPayload
+	26, // 30: bino.plugin.v1.GetDatasetResultResponse.dataset:type_name -> bino.plugin.v1.DatasetPayload
+	25, // 31: bino.plugin.v1.ListDocumentsResponse.documents:type_name -> bino.plugin.v1.DocumentPayload
+	2,  // 32: bino.plugin.v1.BinoPlugin.Init:input_type -> bino.plugin.v1.InitRequest
+	5,  // 33: bino.plugin.v1.BinoPlugin.Shutdown:input_type -> bino.plugin.v1.ShutdownRequest
+	8,  // 34: bino.plugin.v1.BinoPlugin.GetSchemas:input_type -> bino.plugin.v1.GetSchemasRequest
+	10, // 35: bino.plugin.v1.BinoPlugin.CollectDataSource:input_type -> bino.plugin.v1.CollectDataSourceRequest
+	12, // 36: bino.plugin.v1.BinoPlugin.Lint:input_type -> bino.plugin.v1.LintRequest
+	16, // 37: bino.plugin.v1.BinoPlugin.GetAssets:input_type -> bino.plugin.v1.GetAssetsRequest
+	29, // 38: bino.plugin.v1.BinoPlugin.ListCommands:input_type -> bino.plugin.v1.ListCommandsRequest
+	21, // 39: bino.plugin.v1.BinoPlugin.ExecCommand:input_type -> bino.plugin.v1.ExecCommandRequest
+	23, // 40: bino.plugin.v1.BinoPlugin.OnHook:input_type -> bino.plugin.v1.HookRequest
+	31, // 41: bino.plugin.v1.BinoPlugin.RenderComponent:input_type -> bino.plugin.v1.RenderComponentRequest
+	33, // 42: bino.plugin.v1.BinoHost.QueryDuckDB:input_type -> bino.plugin.v1.QueryRequest
+	35, // 43: bino.plugin.v1.BinoHost.GetDocument:input_type -> bino.plugin.v1.GetDocumentRequest
+	37, // 44: bino.plugin.v1.BinoHost.GetDatasetResult:input_type -> bino.plugin.v1.GetDatasetResultRequest
+	39, // 45: bino.plugin.v1.BinoHost.ListDocuments:input_type -> bino.plugin.v1.ListDocumentsRequest
+	3,  // 46: bino.plugin.v1.BinoPlugin.Init:output_type -> bino.plugin.v1.PluginManifest
+	6,  // 47: bino.plugin.v1.BinoPlugin.Shutdown:output_type -> bino.plugin.v1.ShutdownResponse
+	9,  // 48: bino.plugin.v1.BinoPlugin.GetSchemas:output_type -> bino.plugin.v1.GetSchemasResponse
+	11, // 49: bino.plugin.v1.BinoPlugin.CollectDataSource:output_type -> bino.plugin.v1.CollectDataSourceResponse
+	14, // 50: bino.plugin.v1.BinoPlugin.Lint:output_type -> bino.plugin.v1.LintResponse
+	17, // 51: bino.plugin.v1.BinoPlugin.GetAssets:output_type -> bino.plugin.v1.GetAssetsResponse
+	30, // 52: bino.plugin.v1.BinoPlugin.ListCommands:output_type -> bino.plugin.v1.ListCommandsResponse
+	22, // 53: bino.plugin.v1.BinoPlugin.ExecCommand:output_type -> bino.plugin.v1.ExecCommandOutput
+	27, // 54: bino.plugin.v1.BinoPlugin.OnHook:output_type -> bino.plugin.v1.HookResponse
+	32, // 55: bino.plugin.v1.BinoPlugin.RenderComponent:output_type -> bino.plugin.v1.RenderComponentResponse
+	34, // 56: bino.plugin.v1.BinoHost.QueryDuckDB:output_type -> bino.plugin.v1.QueryResponse
+	36, // 57: bino.plugin.v1.BinoHost.GetDocument:output_type -> bino.plugin.v1.GetDocumentResponse
+	38, // 58: bino.plugin.v1.BinoHost.GetDatasetResult:output_type -> bino.plugin.v1.GetDatasetResultResponse
+	40, // 59: bino.plugin.v1.BinoHost.ListDocuments:output_type -> bino.plugin.v1.ListDocumentsResponse
+	46, // [46:60] is the sub-list for method output_type
+	32, // [32:46] is the sub-list for method input_type
+	32, // [32:32] is the sub-list for extension type_name
+	32, // [32:32] is the sub-list for extension extendee
+	0,  // [0:32] is the sub-list for field type_name
 }
 
 func init() { file_proto_v1_plugin_proto_init() }
@@ -2812,7 +2888,7 @@ func file_proto_v1_plugin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_v1_plugin_proto_rawDesc), len(file_proto_v1_plugin_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   44,
+			NumMessages:   45,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

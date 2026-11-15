@@ -111,6 +111,7 @@ plugin. Call this as the last line of `main()`.
 | `Description` | `string` | One-line description |
 | `Kinds` | `[]Kind` | Custom kind registrations |
 | `DuckDBExtensions` | `[]string` | DuckDB extensions to load |
+| `SessionMacros` | `[]SessionMacro` | DuckDB macros the host registers in every session |
 | `CollectDataSource` | `func(ctx, *CollectRequest) (*CollectResponse, error)` | DataSource handler |
 | `LintRules` | `[]LintRule` | Lint rule definitions |
 | `Assets` | `[]Asset` | Static JS/CSS assets |
@@ -269,6 +270,43 @@ sdk.Serve(&sdk.PluginOpts{
     },
 })
 ```
+
+### Session macros
+
+A plugin can ship DuckDB macros. The host registers them in every DuckDB
+session it opens, so users call them in DataSet SQL. Use them to reduce large
+data (summaries, bins) inside the query, before the rows become JSON.
+
+```go
+sdk.Serve(&sdk.PluginOpts{
+    Name: "stats",
+    SessionMacros: []sdk.SessionMacro{{
+        Name:     "stats_spread",
+        SQL:      "CREATE OR REPLACE MACRO stats_spread(x) AS max(x) - min(x)",
+        SmokeSQL: "SELECT stats_spread(v) FROM (VALUES (1), (3)) t(v)",
+    }},
+})
+```
+
+```sql
+SELECT region, stats_spread(amount) AS spread FROM sales GROUP BY region
+```
+
+The host checks the macros when it loads the plugin and refuses the plugin if a
+check fails:
+
+- The plugin name must match `^[a-z][a-z0-9]*$`.
+- Every macro name must start with `<plugin name>_`. Names that start with
+  `bino_` or `_bino_` are refused.
+- `SQL` is exactly one `CREATE OR REPLACE MACRO <name> ...` statement.
+- `SmokeSQL` is optional. It is a query that calls the macro on a few inline
+  rows. The host runs it once. DuckDB checks at creation only what does not
+  depend on the arguments. A table macro that reads a table given by the caller
+  (`query_table`) is bound only in a call, so without `SmokeSQL` a wrong column
+  name shows up only in a user's query.
+
+Hosts that do not know session macros ignore them and still load the plugin.
+Check `InitInfo.BinoVersion` in `OnInit` if your plugin needs them.
 
 ### Component front end
 
