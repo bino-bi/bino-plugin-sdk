@@ -7,6 +7,11 @@ import (
 	"slices"
 	"testing"
 
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protodesc"
+	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/dynamicpb"
+
 	pluginv1 "github.com/bino-bi/bino-plugin-sdk/proto/v1"
 )
 
@@ -697,5 +702,82 @@ func TestIsScript(t *testing.T) {
 		if got := isScript(tt.path); got != tt.want {
 			t.Errorf("isScript(%q) = %v, want %v", tt.path, got, tt.want)
 		}
+	}
+}
+
+func TestGRPCServer_Init_SessionMacros(t *testing.T) {
+	s := newTestServer(&PluginOpts{
+		Name: "stats",
+		SessionMacros: []SessionMacro{
+			{Name: "stats_spread", SQL: "CREATE OR REPLACE MACRO stats_spread(x) AS max(x) - min(x)", SmokeSQL: "SELECT stats_spread(v) FROM (VALUES (1), (3)) t(v)"},
+			{Name: "stats_twice", SQL: "CREATE OR REPLACE MACRO stats_twice(x) AS x * 2"},
+		},
+	})
+	resp, err := s.Init(context.Background(), &pluginv1.InitRequest{})
+	if err != nil {
+		t.Fatalf("Init failed: %v", err)
+	}
+	got := resp.GetSessionMacros()
+	if len(got) != 2 {
+		t.Fatalf("expected 2 session macros, got %d", len(got))
+	}
+	if got[0].GetName() != "stats_spread" ||
+		got[0].GetSql() != "CREATE OR REPLACE MACRO stats_spread(x) AS max(x) - min(x)" ||
+		got[0].GetSmokeSql() != "SELECT stats_spread(v) FROM (VALUES (1), (3)) t(v)" {
+		t.Fatalf("first macro not mapped: %v", got[0])
+	}
+	if got[1].GetName() != "stats_twice" || got[1].GetSmokeSql() != "" {
+		t.Fatalf("second macro not mapped: %v", got[1])
+	}
+}
+
+func TestGRPCServer_Init_NoSessionMacros(t *testing.T) {
+	s := newTestServer(&PluginOpts{Name: "plain"})
+	resp, err := s.Init(context.Background(), &pluginv1.InitRequest{})
+	if err != nil {
+		t.Fatalf("Init failed: %v", err)
+	}
+	if len(resp.GetSessionMacros()) != 0 {
+		t.Fatalf("expected no session macros, got %v", resp.GetSessionMacros())
+	}
+}
+
+// A host built before session macros has no field 16 in PluginManifest. It must
+// still decode the manifest and keep every field it knows.
+func TestPluginManifest_SessionMacrosIgnoredByOlderHost(t *testing.T) {
+	wire, err := proto.Marshal(&pluginv1.PluginManifest{
+		Name:             "stats",
+		Version:          "1.0.0",
+		DuckdbExtensions: []string{"httpfs"},
+		Hooks:            []string{"post-load"},
+		SessionMacros:    []*pluginv1.SessionMacro{{Name: "stats_twice", Sql: "CREATE OR REPLACE MACRO stats_twice(x) AS x * 2"}},
+	})
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+
+	fdp := protodesc.ToFileDescriptorProto(pluginv1.File_proto_v1_plugin_proto)
+	for _, m := range fdp.GetMessageType() {
+		if m.GetName() != "PluginManifest" {
+			continue
+		}
+		m.Field = slices.DeleteFunc(m.Field, func(f *descriptorpb.FieldDescriptorProto) bool {
+			return f.GetNumber() == 16
+		})
+	}
+	oldFile, err := protodesc.NewFile(fdp, nil)
+	if err != nil {
+		t.Fatalf("build old descriptor: %v", err)
+	}
+	oldDesc := oldFile.Messages().ByName("PluginManifest")
+	old := dynamicpb.NewMessage(oldDesc)
+	if err := proto.Unmarshal(wire, old); err != nil {
+		t.Fatalf("older host failed to decode the manifest: %v", err)
+	}
+	if got := old.Get(oldDesc.Fields().ByName("name")).String(); got != "stats" {
+		t.Fatalf("got name %q, want %q", got, "stats")
+	}
+	if got := old.Get(oldDesc.Fields().ByName("hooks")).List().Len(); got != 1 {
+		t.Fatalf("got %d hooks, want 1", got)
 	}
 }

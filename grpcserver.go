@@ -82,6 +82,14 @@ func (s *grpcServer) Init(ctx context.Context, req *pluginv1.InitRequest) (*plug
 		})
 	}
 
+	for _, m := range s.opts.SessionMacros {
+		manifest.SessionMacros = append(manifest.SessionMacros, &pluginv1.SessionMacro{
+			Name:     m.Name,
+			Sql:      m.SQL,
+			SmokeSql: m.SmokeSQL,
+		})
+	}
+
 	for _, cmd := range s.opts.Commands {
 		manifest.Commands = append(manifest.Commands, commandToProto(cmd))
 	}
