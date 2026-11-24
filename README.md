@@ -375,6 +375,64 @@ LintRules: []sdk.LintRule{{
 }},
 ```
 
+## Signed registry releases
+
+The `registryattest` package defines the statement that a signed bino Registry
+release carries. The CLI builds it before signing; the registry and the CLI
+check it when they verify. Use it in any tool that signs or verifies registry
+packages, so the bytes are the same everywhere. It does not sign or verify
+anything itself: the statement is the DSSE payload of a Sigstore bundle
+(payload type `application/vnd.in-toto+json`), and you sign and verify the
+bundle with a Sigstore library.
+
+The statement is in-toto Statement v1 with one subject and a SLSA Provenance v1
+predicate:
+
+```json
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [{
+    "name": "@acme/revenue-table@1.2.0",
+    "digest": {"sha256": "1a667f19ec657dd0697e3de63fcf80f8393375c4baa74fe6c53e81b12823cd22"}
+  }],
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "https://bino.bi/registry/publish/v1",
+      "externalParameters": {
+        "channel": "oidc",
+        "repository": "acme/reports",
+        "workflow": ".github/workflows/publish.yml",
+        "ref": "refs/tags/v1.2.0",
+        "commit": "0123456789abcdef0123456789abcdef01234567",
+        "runUrl": "https://github.com/acme/reports/actions/runs/42"
+      }
+    },
+    "runDetails": {"builder": {"id": "https://bino.bi/cli"}}
+  }
+}
+```
+
+- The subject digest is the manifest digest from `registrydigest.Digest`,
+  without the `sha256:` prefix. It is the only entry in the digest map.
+- `channel` is `ui`, `pat` or `oidc`. The other fields are optional.
+- The payload is compact JSON in the key order shown above.
+
+```go
+pred, err := registryattest.NewPredicate(registryattest.PublishChannel{
+    Channel: registryattest.ChannelOIDC, Repository: "acme/reports", Commit: sha,
+}, "https://bino.bi/cli")
+payload, err := registryattest.NewStatement("acme", "revenue-table", "1.2.0", digest, pred)
+
+// After the bundle signature is verified:
+err = registryattest.CheckStatement(payload, "acme", "revenue-table", "1.2.0", digest)
+ch, err := registryattest.ReadPublishChannel(payload)
+```
+
+Pass the scope without `@`. Scope, name and version must not be empty and must
+not contain `@` or `/`. Every failure is a sentinel error; match it with
+`errors.Is`.
+
 ## Sample plugin (soon)
 
 See [`sample-plugin/`](https://github.com/bino-bi/sample-plugin) for a complete
@@ -420,6 +478,8 @@ bino-plugin-sdk/
   hostclient.go            # HostClient for calling back to the bino host
   schema.go                # SchemaFor: JSON Schema from a Go spec struct
   convert.go               # Proto ↔ Go type conversions
+  registrydigest/          # Canonical content digest of registry documents
+  registryattest/          # Statement format of signed registry releases
 ```
 
 ## Documentation
